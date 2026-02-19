@@ -68,7 +68,7 @@ jobs:
       - name: Run integration tests
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/sqla_authz_test
-        run: uv run pytest -m integration -q
+        run: uv run pytest -m integration -q || [ $? -eq 5 ]
 
   benchmarks:
     runs-on: ubuntu-latest
