@@ -1,0 +1,62 @@
+/* Hero section */
+.hero {
+  text-align: center;
+  padding: 2rem 0 1rem;
+}
+
+.hero-icon {
+  width: 96px;
+  height: 96px;
+  border-radius: 20px;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.hero h1 {
+  font-size: 2.8rem;
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: 1rem;
+}
+
+.hero > p {
+  font-size: 1.2rem;
+  opacity: 0.75;
+  max-width: 600px;
+  margin: 0 auto 1.5rem;
+}
+
+.hero-install {
+  display: inline-block;
+  text-align: center;
+}
+
+.hero-install .highlight {
+  display: inline-block;
+  min-width: 300px;
+  margin-bottom: 0.5rem;
+}
+
+.hero-install p {
+  margin: 0;
+}
+
+/* Hide page title on landing page (shown in hero instead) */
+.md-content__inner > h1:first-child {
+  display: none;
+}
+
+/* Code block improvements */
+.md-typeset code {
+  font-size: 0.85em;
+}
+
+/* Comparison table styling */
+.md-typeset table:not([class]) th {
+  background-color: var(--md-default-fg-color--lightest);
+}
+
+/* Quick links — make 2x2 grid for 4 items */
+.md-typeset h2#quick-links ~ .grid.cards {
+  grid-template-columns: repeat(2, 1fr) !important;
+}

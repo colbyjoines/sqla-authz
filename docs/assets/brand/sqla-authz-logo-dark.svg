@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 256" role="img" aria-label="sqla-authz logo">
+  <rect width="980" height="256" fill="#0B1220"/>
+  <g>
+    <rect width="256" height="256" fill="#2563EB"/>
+    <rect x="56" y="78" width="144" height="22" rx="11" fill="#FFFFFF"/>
+    <rect x="56" y="117" width="144" height="22" rx="11" fill="#FFFFFF"/>
+    <rect x="56" y="156" width="144" height="22" rx="11" fill="#FFFFFF"/>
+    <rect x="178" y="117" width="22" height="22" rx="11" fill="#F59E0B"/>
+  </g>
+  <text x="304" y="168" font-family='system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"' font-size="112" font-weight="700" fill="#FFFFFF">sqla-authz</text>
+</svg>

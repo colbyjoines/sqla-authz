@@ -1,0 +1,123 @@
+site_name: sqla-authz
+site_url: https://colbyjoines.github.io/sqla-authz/
+site_description: "Embedded SQLAlchemy 2.0-native authorization library that converts declarative Python policies into SQL WHERE clauses."
+repo_url: https://github.com/colbyjoines/sqla-authz
+repo_name: colbyjoines/sqla-authz
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.indexes
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.copy
+    - content.code.annotate
+  logo: assets/brand/sqla-authz-icon.svg
+  favicon: assets/brand/favicon.ico
+  icon:
+    repo: fontawesome/brands/github
+
+extra_css:
+  - stylesheets/extra.css
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.mark
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_source: true
+            show_root_heading: true
+            show_root_full_path: false
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            docstring_style: google
+            members_order: source
+            merge_init_into_class: true
+            show_if_no_docstring: false
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - getting-started/installation.md
+    - getting-started/quickstart.md
+    - getting-started/concepts.md
+  - Guide:
+    - guide/policies.md
+    - guide/relationships.md
+    - guide/point-checks.md
+    - guide/session-interception.md
+    - guide/configuration.md
+    - guide/predicates.md
+    - guide/audit-logging.md
+  - Integrations:
+    - integrations/fastapi.md
+    - integrations/flask.md
+    - integrations/async.md
+  - Testing:
+    - testing/utilities.md
+    - testing/fixtures.md
+    - testing/strategies.md
+  - Migration:
+    - migration/from-oso.md
+  - Reference:
+    - reference/api.md
+    - reference/exceptions.md
+    - reference/changelog.md
+  - Architecture:
+    - architecture/design-decisions.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/colbyjoines/sqla-authz
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/sqla-authz/
+
+copyright: Copyright &amp; copy; 2026 Colby Joines

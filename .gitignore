@@ -1,0 +1,121 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[codz]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+*.whl
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py.cover
+.hypothesis/
+.pytest_cache/
+.benchmarks/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Environments
+.env
+.envrc
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# UV
+#   For a library, uv.lock is commonly ignored.
+#   Uncomment to track it for reproducible dev environments:
+# uv.lock
+
+# PEP 582
+__pypackages__/
+
+# mkdocs documentation
+site/
+
+# Sphinx documentation
+docs/_build/
+
+# Type checking / linting
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyright/
+.pyre/
+.pytype/
+.ruff_cache/
+
+# Cython debug symbols
+cython_debug/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+# .idea/
+# .vscode/
+
+# PyPI configuration
+.pypirc
+
+# Misc archives
+docs_archive/
+
+# AI / Claude Code
+.claude/
+CLAUDE.md
+.omc/
+.playwright-mcp/
+
+# AI planning / design artifacts
+PRD.md
+
+# AI-generated screenshots
+*-landing-page.png
+*-full-page.png
+*-section.png
+*-page.png
+*-zoom.png
+*-full.png
+*-check.png
+hero-with-icon.png
