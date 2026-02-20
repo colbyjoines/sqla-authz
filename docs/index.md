@@ -9,10 +9,9 @@ hide:
 
 <img src="assets/brand/sqla-authz-icon.svg" alt="sqla-authz" class="hero-icon">
 
-# Authorization that compiles to SQL
+# sqla-authz
 
-Define policies in Python. Get SQL WHERE clauses automatically.
-No external servers, no custom DSLs.
+Row-level authorization for SQLAlchemy 2.0. No DSL — because why would we? Policies are just Python functions.
 
 <div class="hero-install" markdown>
 
@@ -30,9 +29,9 @@ pip install sqla-authz
 
 ---
 
-## See it in action
+## Example
 
-```python title="Authorization in ten lines"
+```python
 from sqla_authz import policy, authorize_query
 from sqlalchemy import ColumnElement, or_, select
 
@@ -46,21 +45,6 @@ stmt = select(Post).order_by(Post.created_at.desc())
 stmt = authorize_query(stmt, actor=current_user, action="read")
 # SQL: SELECT ... FROM post WHERE (is_published = true OR author_id = :id)
 ```
-
-One decorator. One call. Your policy becomes a WHERE clause — evaluated by the database, not in Python.
-
----
-
-## Why sqla-authz?
-
-| Feature | sqla-authz | sqlalchemy-oso | PyCasbin | Cerbos |
-|---------|:----------:|:--------------:|:--------:|:------:|
-| SQL WHERE clause generation | Yes | Yes *(deprecated)* | No | Yes *(via server)* |
-| SQLAlchemy 2.0 (`select()`) | Yes | No | N/A | Yes |
-| `AsyncSession` support | Yes | No | N/A | No |
-| Embedded (no server) | Yes | Yes | Yes | No |
-| Python-native policies | Yes | No — Polar DSL | No — `.conf` files | No — YAML |
-| Type-safe (pyright strict) | Yes | No | No | No |
 
 ---
 
@@ -92,42 +76,17 @@ flowchart LR
     I --> J
 ```
 
-Policies are registered in a central `PolicyRegistry`. Whichever entry point you use — explicit `authorize_query()`, the automatic `do_orm_execute` hook, or a framework integration — the same compiler converts your Python function into a `ColumnElement[bool]` and appends it as a `WHERE` clause.
+Policies are registered in a `PolicyRegistry`. The compiler converts your Python function into a `ColumnElement[bool]` and appends it as a `WHERE` clause. The same policies work with both `Session` and `AsyncSession`.
+
+- No policy for a `(model, action)` pair → `WHERE FALSE` (deny by default)
+- No external server or sidecar — runs in-process
+- No custom DSL — policies are plain Python functions with type annotations
 
 ---
 
-<div class="grid cards" markdown>
-
--   :material-rocket-launch: **Getting Started**
-
-    ---
-
-    Install, write your first policy, and run an authorized query in five minutes.
-
-    [Get started](getting-started.md)
-
--   :material-book-open-variant: **Guide**
-
-    ---
-
-    Policies, relationships, point checks, session interception, configuration, and more.
-
-    [Read the guide](guide.md)
-
--   :material-lightning-bolt: **Integrations**
-
-    ---
-
-    FastAPI and Flask integration with dependency injection and error handling.
-
-    [Integrations](integrations.md)
-
--   :material-code-tags: **API Reference**
-
-    ---
-
-    Complete reference for all public functions, classes, and types.
-
-    [API reference](reference/api.md)
-
-</div>
+- [Getting Started](getting-started.md) — Installation, first policy, core concepts
+- [Guide](guide.md) — Policies, relationships, point checks, session interception, configuration
+- [Integrations](integrations.md) — FastAPI and Flask
+- [Testing](testing.md) — Mock actors, assertion helpers, pytest fixtures
+- [API Reference](reference/api.md) — All public functions, classes, and types
+- [Changelog](reference/changelog.md)

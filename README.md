@@ -6,9 +6,7 @@
 [![codecov](https://codecov.io/gh/colbyjoines/sqla-authz/graph/badge.svg)](https://codecov.io/gh/colbyjoines/sqla-authz)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**Declarative authorization that compiles to SQL WHERE clauses.**
-
-An embedded, open-source, SQLAlchemy 2.0-native authorization library. Define policies in Python, get SQL filters automatically -- no external servers, no network round-trips, no custom DSLs.
+Row-level authorization for SQLAlchemy 2.0. Define policies as Python functions — no external servers, no custom DSLs.
 
 Fills the vacuum left by [Oso's deprecation](https://github.com/osohq/oso) (December 2023). No maintained alternative exists that generates SQL query filters for SQLAlchemy 2.0.
 
@@ -16,7 +14,7 @@ Fills the vacuum left by [Oso's deprecation](https://github.com/osohq/oso) (Dece
 
 | Feature | sqla-authz | sqlalchemy-oso | PyCasbin | Cerbos |
 |---------|-----------|---------------|----------|--------|
-| SQL WHERE clause generation | Yes | Yes (deprecated) | No | Yes (via server) |
+| SQL filter generation | Yes | Yes (deprecated) | No | Yes (via server) |
 | SQLAlchemy 2.0 (`select()`) | Yes | No | N/A | Yes |
 | AsyncSession | Yes | No | N/A | No |
 | Embedded (no server) | Yes | Yes | Yes | No |

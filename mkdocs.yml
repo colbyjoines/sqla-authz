@@ -1,6 +1,6 @@
 site_name: sqla-authz
 site_url: https://colbyjoines.github.io/sqla-authz/
-site_description: "Embedded SQLAlchemy 2.0-native authorization library that converts declarative Python policies into SQL WHERE clauses."
+site_description: "Row-level authorization for SQLAlchemy 2.0. Define policies as Python functions."
 repo_url: https://github.com/colbyjoines/sqla-authz
 repo_name: colbyjoines/sqla-authz
 edit_uri: edit/main/docs/
