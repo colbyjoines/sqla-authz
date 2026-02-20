@@ -1,134 +1,24 @@
 /* ================================================
-   sqla-authz docs — Violet + Slate brand theme
+   sqla-authz docs — Brand color overrides
+   Only override what Zensical doesn't handle.
    ================================================ */
 
-/* ----- Light mode ----- */
-[data-md-color-scheme="default"] {
-  --md-primary-fg-color:             #7c3aed;
-  --md-primary-fg-color--light:      #8b5cf6;
-  --md-primary-fg-color--dark:       #6d28d9;
-  --md-primary-bg-color:             #fff;
-  --md-primary-bg-color--light:      #ffffffb3;
-
-  --md-accent-fg-color:              #7c3aed;
-  --md-accent-fg-color--transparent: #7c3aed1a;
-
-  --md-default-fg-color:             #0f172a;
-  --md-default-fg-color--light:      #475569;
-  --md-default-fg-color--lighter:    #64748b;
-  --md-default-fg-color--lightest:   #e2e8f0;
-
-  --md-default-bg-color:             #ffffff;
-  --md-default-bg-color--light:      #f8fafc;
-  --md-default-bg-color--lighter:    #f1f5f9;
-  --md-default-bg-color--lightest:   #f5f3ff;
-
-  --md-typeset-a-color:              #7c3aed;
-
-  --md-code-bg-color:                #f8fafc;
-  --md-code-fg-color:                #334155;
-
-  --md-admonition-bg-color:          #f8fafc;
+/* ----- Custom primary color (light mode) ----- */
+:root > * {
+  --md-primary-fg-color:        #7c3aed;
+  --md-primary-fg-color--light: #8b5cf6;
+  --md-primary-fg-color--dark:  #6d28d9;
 }
 
-/* ----- Dark mode ----- */
+/* ----- Custom primary color (dark mode) ----- */
 [data-md-color-scheme="slate"] {
-  --md-primary-fg-color:             #8b5cf6;
-  --md-primary-fg-color--light:      #a78bfa;
-  --md-primary-fg-color--dark:       #7c3aed;
-  --md-primary-bg-color:             #020617;
-  --md-primary-bg-color--light:      #0f172ab3;
-
-  --md-accent-fg-color:              #8b5cf6;
-  --md-accent-fg-color--transparent: #8b5cf61a;
-
-  --md-default-fg-color:             #f8fafc;
-  --md-default-fg-color--light:      #94a3b8;
-  --md-default-fg-color--lighter:    #64748b;
-  --md-default-fg-color--lightest:   #1e293b;
-
-  --md-default-bg-color:             #020617;
-  --md-default-bg-color--light:      #0f172a;
-  --md-default-bg-color--lighter:    #1e293b;
-  --md-default-bg-color--lightest:   #1e1b4b;
-
-  --md-typeset-a-color:              #a78bfa;
-
-  --md-code-bg-color:                #0f172a;
-  --md-code-fg-color:                #e2e8f0;
-  --md-code-hl-color:                #8b5cf620;
-
-  --md-admonition-bg-color:          #0f172a;
-
-  --md-footer-bg-color:              #020617;
-  --md-footer-bg-color--dark:        #020617;
-
-  --md-hue:                          230;
+  --md-hue: 263;
+  --md-primary-fg-color:        #8b5cf6;
+  --md-primary-fg-color--light: #a78bfa;
+  --md-primary-fg-color--dark:  #7c3aed;
 }
 
-/* ----- Global ----- */
-body {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-/* ----- Smooth color-scheme transitions ----- */
-body,
-.md-header,
-.md-tabs,
-.md-footer,
-.md-sidebar,
-.md-typeset a,
-.md-typeset code {
-  transition: background-color .3s ease, color .3s ease, border-color .3s ease;
-}
-
-/* ----- Header ----- */
-.md-header {
-  box-shadow: 0 1px 8px rgba(0, 0, 0, .08);
-}
-
-/* ----- Announcement bar ----- */
-.md-banner {
-  background: var(--md-primary-fg-color--dark);
-  color: #ede9fe;
-  font-size: .8rem;
-  letter-spacing: .015em;
-}
-
-[data-md-color-scheme="slate"] .md-banner {
-  background: #1e1b4b;
-  color: #c4b5fd;
-}
-
-.md-banner a {
-  color: #ddd6fe;
-}
-
-/* ----- Tabs ----- */
-.md-tabs {
-  background-color: var(--md-primary-fg-color);
-}
-
-.md-tabs__link {
-  color: rgba(255, 255, 255, .7) !important;
-  font-weight: 400;
-}
-
-.md-tabs__link:hover {
-  color: #fff !important;
-}
-
-.md-tabs__link--active {
-  color: #fff !important;
-  font-weight: 500;
-}
-
-[data-md-color-scheme="slate"] .md-tabs {
-  background-color: #4c1d95;
-}
-
-/* ----- Hero section ----- */
+/* ----- Hero section (landing page only) ----- */
 .hero {
   text-align: center;
   padding: 3.5rem 1rem 2.5rem;
@@ -137,7 +27,7 @@ body,
 }
 
 [data-md-color-scheme="slate"] .hero {
-  background: radial-gradient(ellipse at 50% 0%, #1e1b4b40 0%, transparent 70%);
+  background: radial-gradient(ellipse at 50% 0%, rgba(139, 92, 246, .08) 0%, transparent 70%);
 }
 
 .hero-icon {
@@ -179,7 +69,7 @@ body,
 
 .hero > p {
   font-size: 1.2rem;
-  color: var(--md-default-fg-color--light);
+  opacity: 0.75;
   max-width: 600px;
   margin: 0 auto 1.75rem;
   line-height: 1.6;
@@ -207,41 +97,10 @@ body,
   display: none;
 }
 
-/* ----- Links ----- */
-.md-typeset a {
-  transition: color .15s ease;
-}
-
-.md-typeset a:hover {
-  color: var(--md-primary-fg-color--dark);
-}
-
-[data-md-color-scheme="slate"] .md-typeset a:hover {
-  color: var(--md-primary-fg-color--light);
-}
-
-/* ----- Code ----- */
-.md-typeset code {
-  font-size: 0.85em;
-  border-radius: 4px;
-}
-
-.md-typeset pre > code {
-  border-radius: 8px;
-}
-
-/* Inline code subtle border */
-.md-typeset :not(pre) > code {
-  padding: 0.15em 0.4em;
-  border: 1px solid var(--md-default-fg-color--lightest);
-}
-
-/* ----- Cards ----- */
+/* ----- Cards: subtle hover polish ----- */
 .md-typeset .grid.cards > ul > li,
 .md-typeset .grid.cards > ol > li {
-  border: 1px solid var(--md-default-fg-color--lightest);
   border-radius: 12px;
-  padding: 1.2rem;
   transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
 }
 
@@ -254,83 +113,13 @@ body,
 
 [data-md-color-scheme="slate"] .md-typeset .grid.cards > ul > li:hover,
 [data-md-color-scheme="slate"] .md-typeset .grid.cards > ol > li:hover {
-  border-color: #8b5cf640;
+  border-color: rgba(139, 92, 246, .25);
   box-shadow: 0 4px 16px rgba(139, 92, 246, .12);
-}
-
-/* Card titles */
-.md-typeset .grid.cards > ul > li > p:first-child strong,
-.md-typeset .grid.cards > ol > li > p:first-child strong {
-  color: var(--md-primary-fg-color);
-}
-
-/* ----- Tables ----- */
-.md-typeset table:not([class]) th {
-  background-color: var(--md-default-bg-color--lightest);
-  font-weight: 600;
-  border-bottom: 2px solid var(--md-primary-fg-color--light);
-}
-
-.md-typeset table:not([class]) td {
-  border-bottom: 1px solid var(--md-default-fg-color--lightest);
-}
-
-/* ----- Admonitions ----- */
-.md-typeset .admonition,
-.md-typeset details {
-  border-radius: 8px;
-  border-width: 1px;
-  border-left-width: 4px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
-}
-
-/* ----- Section headings ----- */
-.md-typeset h2 {
-  font-weight: 700;
-  letter-spacing: -0.01em;
-}
-
-/* ----- Sidebar nav ----- */
-.md-nav__link:hover {
-  color: var(--md-primary-fg-color);
-}
-
-.md-nav__link--active {
-  color: var(--md-primary-fg-color) !important;
-  font-weight: 600;
-}
-
-/* Sidebar active item background */
-.md-nav__item .md-nav__link--active {
-  background-color: var(--md-accent-fg-color--transparent);
-  border-radius: 4px;
-  margin-left: -0.4rem;
-  padding-left: 0.4rem;
-}
-
-/* ----- Search ----- */
-.md-search__input {
-  border-radius: 8px;
-}
-
-/* ----- Footer ----- */
-.md-footer {
-  border-top: 1px solid var(--md-default-fg-color--lightest);
-}
-
-/* ----- Horizontal rules ----- */
-.md-typeset hr {
-  border-color: var(--md-default-fg-color--lightest);
 }
 
 /* ----- Quick links grid: 2x2 for 4 items ----- */
 .md-typeset h2#quick-links ~ .grid.cards {
   grid-template-columns: repeat(2, 1fr) !important;
-}
-
-/* ----- Mermaid diagrams ----- */
-.mermaid {
-  margin: 1.5rem 0;
 }
 
 /* ----- Responsive ----- */
