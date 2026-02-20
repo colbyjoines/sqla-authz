@@ -1,7 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="sqla-authz icon">
-  <rect width="256" height="256" fill="#2563EB"/>
-  <rect x="56" y="78" width="144" height="22" rx="11" fill="#FFFFFF"/>
-  <rect x="56" y="117" width="144" height="22" rx="11" fill="#FFFFFF"/>
-  <rect x="56" y="156" width="144" height="22" rx="11" fill="#FFFFFF"/>
-  <rect x="178" y="117" width="22" height="22" rx="11" fill="#F59E0B"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <rect x="0" y="0" width="64" height="64" rx="14" fill="#0f172a"/>
+  <rect x="16" y="18" width="34" height="8" rx="4" fill="#f1f5f9"/>
+  <rect x="16" y="32" width="28" height="8" rx="4" fill="#7c3aed"/>
+  <rect x="16" y="46" width="22" height="8" rx="4" fill="#f1f5f9"/>
 </svg>

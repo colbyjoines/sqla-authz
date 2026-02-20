@@ -1,11 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 256" role="img" aria-label="sqla-authz logo">
-  <rect width="980" height="256" fill="#FFFFFF"/>
-  <g>
-    <rect width="256" height="256" fill="#2563EB"/>
-    <rect x="56" y="78" width="144" height="22" rx="11" fill="#FFFFFF"/>
-    <rect x="56" y="117" width="144" height="22" rx="11" fill="#FFFFFF"/>
-    <rect x="56" y="156" width="144" height="22" rx="11" fill="#FFFFFF"/>
-    <rect x="178" y="117" width="22" height="22" rx="11" fill="#F59E0B"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="200" viewBox="0 0 720 200">
+  <rect x="0" y="0" width="720" height="200" fill="#ffffff"/>
+  <g transform="translate(32 52)">
+    <rect x="0" y="0" width="96" height="96" rx="21" fill="#0f172a"/>
+    <rect x="24.00" y="27.00" width="51.00" height="12.00" rx="6.00" fill="#f1f5f9"/>
+    <rect x="24.00" y="48.00" width="42.00" height="12.00" rx="6.00" fill="#7c3aed"/>
+    <rect x="24.00" y="69.00" width="33.00" height="12.00" rx="6.00" fill="#f1f5f9"/>
   </g>
-  <text x="304" y="168" font-family='system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"' font-size="112" font-weight="700" fill="#111827">sqla-authz</text>
+  <text x="152" y="114" fill="#0f172a"
+        font-family='system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"'
+        font-size="56"
+        font-weight="600"
+        letter-spacing="-0.02em">sqla-authz</text>
 </svg>
