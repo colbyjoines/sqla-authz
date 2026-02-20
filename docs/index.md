@@ -96,83 +96,37 @@ Policies are registered in a central `PolicyRegistry`. Whichever entry point you
 
 ---
 
-## Key features
-
-<div class="grid cards" markdown>
-
--   **SQL-Native**
-
-    ---
-
-    Policies compile to real SQL `WHERE` clauses. Filtering happens in the database — not in Python loops after fetching rows. Works with every database SQLAlchemy supports.
-
--   **Async-Equal**
-
-    ---
-
-    The same policy functions work unchanged with both sync `Session` and `AsyncSession`. Filter construction is pure Python — no I/O, no `await`. The async boundary stays at `session.execute()`.
-
--   **Fail-Closed**
-
-    ---
-
-    No registered policy for a `(model, action)` pair? The query gets `WHERE FALSE` appended — zero rows returned. Missing policies never leak data. Configurable to raise `NoPolicyError` instead.
-
--   **Zero Dependencies**
-
-    ---
-
-    Ships with no runtime dependencies beyond SQLAlchemy itself. No external authorization server. No network round-trip. No sidecar container. Just a library.
-
--   **Type-Safe**
-
-    ---
-
-    Written for pyright strict mode. Policies are typed Python functions. No stringly-typed rule files. Your IDE understands your policies; refactoring just works.
-
--   **Composable**
-
-    ---
-
-    Multiple policies for the same `(model, action)` are OR'd together automatically. Build complex rules from small, testable pieces using `&`, `|`, and `~` operators.
-
-</div>
-
----
-
-## Quick links
-
 <div class="grid cards" markdown>
 
 -   :material-rocket-launch: **Getting Started**
 
     ---
 
-    Install sqla-authz, write your first policy, and run an authorized query in under five minutes.
+    Install, write your first policy, and run an authorized query in five minutes.
 
-    [Get started](getting-started/quickstart.md)
+    [Get started](getting-started.md)
 
--   :material-lightning-bolt: **FastAPI Guide**
-
-    ---
-
-    Add per-route authorization with `AuthzDep`. Handles actor extraction, error responses, and async sessions.
-
-    [FastAPI integration](integrations/fastapi.md)
-
--   :material-swap-horizontal: **Migration from Oso**
+-   :material-book-open-variant: **Guide**
 
     ---
 
-    Moving from `sqlalchemy-oso`? Learn how to translate Polar rules to `@policy` functions.
+    Policies, relationships, point checks, session interception, configuration, and more.
 
-    [Migration guide](migration/from-oso.md)
+    [Read the guide](guide.md)
 
--   :material-book-open-variant: **API Reference**
+-   :material-lightning-bolt: **Integrations**
 
     ---
 
-    Complete reference for `policy`, `authorize_query`, `can`, `authorize`, `configure`, and all public types.
+    FastAPI and Flask integration with dependency injection and error handling.
+
+    [Integrations](integrations.md)
+
+-   :material-code-tags: **API Reference**
+
+    ---
+
+    Complete reference for all public functions, classes, and types.
 
     [API reference](reference/api.md)
 

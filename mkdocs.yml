@@ -88,31 +88,13 @@ plugins:
 
 nav:
   - Home: index.md
-  - Getting Started:
-    - getting-started/installation.md
-    - getting-started/quickstart.md
-    - getting-started/concepts.md
-  - Guide:
-    - guide/policies.md
-    - guide/relationships.md
-    - guide/point-checks.md
-    - guide/session-interception.md
-    - guide/configuration.md
-    - guide/predicates.md
-    - guide/audit-logging.md
-  - Integrations:
-    - integrations/fastapi.md
-    - integrations/flask.md
-    - integrations/async.md
+  - Getting Started: getting-started.md
+  - Guide: guide.md
+  - Integrations: integrations.md
   - Testing: testing.md
-  - Migration:
-    - migration/from-oso.md
   - Reference:
     - reference/api.md
-    - reference/exceptions.md
     - reference/changelog.md
-  - Architecture:
-    - architecture/design-decisions.md
 
 extra:
   social:
