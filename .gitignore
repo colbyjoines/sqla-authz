@@ -101,16 +101,7 @@ Thumbs.db
 # Misc archives
 docs_archive/
 
-# AI / Claude Code
-.claude/
-CLAUDE.md
-.omc/
-.playwright-mcp/
 
-# AI planning / design artifacts
-PRD.md
-
-# AI-generated screenshots
 *-landing-page.png
 *-full-page.png
 *-section.png
@@ -118,4 +109,3 @@ PRD.md
 *-zoom.png
 *-full.png
 *-check.png
-hero-with-icon.png
