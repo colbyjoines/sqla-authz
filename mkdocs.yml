@@ -100,10 +100,7 @@ nav:
     - integrations/fastapi.md
     - integrations/flask.md
     - integrations/async.md
-  - Testing:
-    - testing/utilities.md
-    - testing/fixtures.md
-    - testing/strategies.md
+  - Testing: testing.md
   - Migration:
     - migration/from-oso.md
   - Reference:

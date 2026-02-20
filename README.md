@@ -110,8 +110,7 @@ graph TD
 
 ## Documentation
 
-- [Technical Design Document](docs/TDD.md) -- Full architecture and API specification
-- [Research Findings](docs/research/) -- Prior art analysis and design rationale
+Full documentation at [colbyjoines.github.io/sqla-authz](https://colbyjoines.github.io/sqla-authz/).
 
 ## Contributing
 
@@ -131,10 +130,6 @@ ruff format src/ tests/
 # Type check
 pyright src/
 ```
-
-## Status
-
-**Phase 3: Complete.** Core MVP, integrations (FastAPI, Flask), testing utilities, audit logging, and benchmarks are implemented.
 
 ## License
 
