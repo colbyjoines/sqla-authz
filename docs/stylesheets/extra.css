@@ -110,6 +110,24 @@ body,
   background-color: var(--md-primary-fg-color);
 }
 
+.md-tabs__link {
+  color: rgba(255, 255, 255, .7) !important;
+  font-weight: 400;
+}
+
+.md-tabs__link:hover {
+  color: #fff !important;
+}
+
+.md-tabs__link--active {
+  color: #fff !important;
+  font-weight: 500;
+}
+
+[data-md-color-scheme="slate"] .md-tabs {
+  background-color: #4c1d95;
+}
+
 /* ----- Hero section ----- */
 .hero {
   text-align: center;
@@ -266,6 +284,12 @@ body,
   box-shadow: 0 1px 3px rgba(0, 0, 0, .04);
 }
 
+/* ----- Section headings ----- */
+.md-typeset h2 {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
 /* ----- Sidebar nav ----- */
 .md-nav__link:hover {
   color: var(--md-primary-fg-color);
@@ -274,6 +298,14 @@ body,
 .md-nav__link--active {
   color: var(--md-primary-fg-color) !important;
   font-weight: 600;
+}
+
+/* Sidebar active item background */
+.md-nav__item .md-nav__link--active {
+  background-color: var(--md-accent-fg-color--transparent);
+  border-radius: 4px;
+  margin-left: -0.4rem;
+  padding-left: 0.4rem;
 }
 
 /* ----- Search ----- */
