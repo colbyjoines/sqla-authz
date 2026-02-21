@@ -521,41 +521,6 @@ class TestFastAPIExports:
 
 
 # ---------------------------------------------------------------------------
-# Sub-package: sqla_authz.integrations.flask
-# ---------------------------------------------------------------------------
-
-
-class TestFlaskExports:
-    """Verify sqla_authz.integrations.flask exports."""
-
-    EXPECTED = {"AuthzExtension"}
-
-    def test_all_expected_symbols_importable(self) -> None:
-        from sqla_authz.integrations.flask import AuthzExtension
-
-        assert AuthzExtension is not None
-
-    def test_authz_extension_is_class(self) -> None:
-        from sqla_authz.integrations.flask import AuthzExtension
-
-        assert inspect.isclass(AuthzExtension)
-
-    def test_all_is_complete(self) -> None:
-        import sqla_authz.integrations.flask
-
-        actual = set(sqla_authz.integrations.flask.__all__)
-        assert actual == self.EXPECTED
-
-    def test_all_matches_module_attrs(self) -> None:
-        import sqla_authz.integrations.flask
-
-        for name in sqla_authz.integrations.flask.__all__:
-            assert hasattr(sqla_authz.integrations.flask, name), (
-                f"sqla_authz.integrations.flask.__all__ lists {name!r} but it is not an attribute"
-            )
-
-
-# ---------------------------------------------------------------------------
 # py.typed marker
 # ---------------------------------------------------------------------------
 

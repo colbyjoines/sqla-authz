@@ -21,9 +21,8 @@ Optional extras:
 | Extra | Use when |
 |---|---|
 | `sqla-authz[fastapi]` | Building FastAPI apps |
-| `sqla-authz[flask]` | Building Flask apps |
 | `sqla-authz[testing]` | Writing tests with built-in fixtures |
-| `sqla-authz[all]` | Multi-framework projects |
+| `sqla-authz[all]` | All optional dependencies |
 
 ---
 
@@ -119,7 +118,7 @@ def own_posts(actor) -> ColumnElement[bool]:
 
 1. **Explicit** — `authorize_query()` before executing any statement. Full control. Recommended starting point.
 2. **Automatic** — `authorized_sessionmaker()` wraps your session factory so every SELECT is authorized via `do_orm_execute`. See [Session Interception](guide.md#session-interception).
-3. **Framework** — `AuthzDep` (FastAPI) or `AuthzExtension` (Flask). See [Integrations](integrations.md).
+3. **Framework** — `AuthzDep` (FastAPI). See [Integrations](integrations.md).
 
 ### ActorLike Protocol
 

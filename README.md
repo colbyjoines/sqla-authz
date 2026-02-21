@@ -51,9 +51,6 @@ pip install sqla-authz
 # With FastAPI integration
 pip install sqla-authz[fastapi]
 
-# With Flask integration
-pip install sqla-authz[flask]
-
 # With test utilities
 pip install sqla-authz[testing]
 
@@ -68,7 +65,6 @@ pip install sqla-authz[all]
 - Relationship traversal via `has()`/`any()` (compiles to EXISTS)
 - Composable predicates with `&`, `|`, `~` operators
 - FastAPI integration via dependency injection (`AuthzDep`)
-- Flask integration via extension (`AuthzExtension`)
 - Point checks: `can(actor, action, resource)` and `authorize(actor, action, resource)`
 - Audit logging for authorization decisions
 - Consumer test utilities (`sqla_authz.testing`)
@@ -84,11 +80,9 @@ graph TD
     C -->|Explicit| D["authorize_query(stmt, actor, action)"]
     C -->|Automatic| E["do_orm_execute event hook"]
     C -->|FastAPI| F["AuthzDep(Post, 'read')"]
-    C -->|Flask| F2["AuthzExtension"]
     D --> G[Policy Compiler]
     E --> G
     F --> G
-    F2 --> G
     G --> H["ColumnElement[bool]<br/>SA filter expression"]
     H --> I["stmt.where(filter)"]
     I --> J["session.execute()<br/>(sync or async)"]

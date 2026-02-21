@@ -105,15 +105,6 @@
     options:
       show_root_heading: true
 
-## Flask Integration
-
-::: sqla_authz.integrations.flask.AuthzExtension
-    options:
-      show_root_heading: true
-      members:
-        - init_app
-        - authorize_query
-
 ## Testing
 
 ::: sqla_authz.testing

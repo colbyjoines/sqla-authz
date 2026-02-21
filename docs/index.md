@@ -86,7 +86,7 @@ Policies are registered in a `PolicyRegistry`. The compiler converts your Python
 
 - [Getting Started](getting-started.md) — Installation, first policy, core concepts
 - [Guide](guide.md) — Policies, relationships, point checks, session interception, configuration
-- [Integrations](integrations.md) — FastAPI and Flask
+- [Integrations](integrations.md) — FastAPI
 - [Testing](testing.md) — Mock actors, assertion helpers, pytest fixtures
 - [API Reference](reference/api.md) — All public functions, classes, and types
 - [Changelog](reference/changelog.md)
