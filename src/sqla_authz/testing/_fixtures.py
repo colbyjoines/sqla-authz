@@ -7,9 +7,10 @@ from typing import Any
 
 import pytest
 
+from sqla_authz.config._config import AuthzConfig
 from sqla_authz.policy._registry import PolicyRegistry
 
-__all__ = ["authz_registry", "authz_config", "authz_context"]
+__all__ = ["authz_registry", "authz_config", "authz_context", "isolated_authz_state"]
 
 
 @pytest.fixture()
@@ -56,3 +57,22 @@ def authz_context() -> None:
     Will be updated when session interception is implemented.
     """
     return None
+
+
+@pytest.fixture()
+def isolated_authz_state() -> Generator[tuple[AuthzConfig, PolicyRegistry], None, None]:
+    """Pytest fixture that isolates global authz state for each test.
+
+    Resets global config and clears the default registry before the test,
+    and restores original state after.
+
+    Example::
+
+        def test_something(isolated_authz_state):
+            cfg, registry = isolated_authz_state
+            registry.register(Post, "read", my_fn, name="p", description="")
+    """
+    from sqla_authz.testing._isolation import isolated_authz
+
+    with isolated_authz() as state:
+        yield state

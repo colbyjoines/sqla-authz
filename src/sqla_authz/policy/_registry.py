@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import inspect
+import threading
 from collections.abc import Callable
 
 from sqlalchemy import ColumnElement
@@ -11,10 +13,34 @@ from sqla_authz.policy._base import PolicyRegistration
 __all__ = ["PolicyRegistry", "get_default_registry"]
 
 
+def _validate_policy_signature(fn: Callable[..., ColumnElement[bool]]) -> None:
+    """Validate that a policy function has at least one positional parameter."""
+    try:
+        sig = inspect.signature(fn)
+    except (ValueError, TypeError):
+        return  # Can't inspect (builtins, C extensions) — skip validation
+
+    params = [
+        p
+        for p in sig.parameters.values()
+        if p.default is inspect.Parameter.empty
+        and p.kind
+        in (
+            inspect.Parameter.POSITIONAL_ONLY,
+            inspect.Parameter.POSITIONAL_OR_KEYWORD,
+        )
+    ]
+    if len(params) < 1:
+        raise TypeError(
+            f"Policy function {fn!r} must accept at least one positional "
+            f"parameter (actor), but has signature {sig}"
+        )
+
+
 class PolicyRegistry:
     """Registry that maps (model, action) pairs to policy functions.
 
-    Thread-safe for reads after startup. Append-only during registration.
+    All public methods are thread-safe via an internal lock.
 
     Example::
 
@@ -25,6 +51,7 @@ class PolicyRegistry:
 
     def __init__(self) -> None:
         self._policies: dict[tuple[type, str], list[PolicyRegistration]] = {}
+        self._lock = threading.Lock()
 
     def register(
         self,
@@ -34,6 +61,7 @@ class PolicyRegistry:
         *,
         name: str,
         description: str,
+        validate_signature: bool = True,
     ) -> None:
         """Register a policy function for a (model, action) pair.
 
@@ -47,6 +75,8 @@ class PolicyRegistry:
                 ``ColumnElement[bool]`` filter expression.
             name: Human-readable name for the policy (used in logging).
             description: Description of the policy (typically the docstring).
+            validate_signature: If ``True`` (default), validate that *fn*
+                accepts at least one positional parameter.
 
         Returns:
             None
@@ -61,6 +91,9 @@ class PolicyRegistry:
                 description="Allow reading published posts",
             )
         """
+        if validate_signature:
+            _validate_policy_signature(fn)
+
         registration = PolicyRegistration(
             resource_type=resource_type,
             action=action,
@@ -69,9 +102,10 @@ class PolicyRegistry:
             description=description,
         )
         key = (resource_type, action)
-        if key not in self._policies:
-            self._policies[key] = []
-        self._policies[key].append(registration)
+        with self._lock:
+            if key not in self._policies:
+                self._policies[key] = []
+            self._policies[key].append(registration)
 
     def lookup(self, resource_type: type, action: str) -> list[PolicyRegistration]:
         """Look up all policies for a (model, action) pair.
@@ -93,7 +127,8 @@ class PolicyRegistry:
             for p in policies:
                 print(p.name)
         """
-        return list(self._policies.get((resource_type, action), []))
+        with self._lock:
+            return list(self._policies.get((resource_type, action), []))
 
     def has_policy(self, resource_type: type, action: str) -> bool:
         """Check whether at least one policy exists for (model, action).
@@ -110,7 +145,8 @@ class PolicyRegistry:
             if not registry.has_policy(Post, "delete"):
                 print("No delete policy for Post")
         """
-        return (resource_type, action) in self._policies
+        with self._lock:
+            return (resource_type, action) in self._policies
 
     def registered_entities(self, action: str) -> set[type]:
         """Return all entity types that have policies registered for *action*.
@@ -129,7 +165,22 @@ class PolicyRegistry:
             entities = registry.registered_entities("read")
             # e.g., {Post, User}
         """
-        return {entity for entity, act in self._policies if act == action}
+        with self._lock:
+            return {entity for entity, act in self._policies if act == action}
+
+    def registered_keys(self) -> set[tuple[type, str]]:
+        """Return all (model, action) pairs that have registered policies.
+
+        Returns:
+            A set of ``(resource_type, action)`` tuples.
+
+        Example::
+
+            keys = registry.registered_keys()
+            # e.g., {(Post, "read"), (Post, "update")}
+        """
+        with self._lock:
+            return set(self._policies.keys())
 
     def clear(self) -> None:
         """Remove all registered policies.
@@ -145,7 +196,8 @@ class PolicyRegistry:
             registry.clear()
             assert registry.lookup(Post, "read") == []
         """
-        self._policies.clear()
+        with self._lock:
+            self._policies.clear()
 
 
 # Module-level default registry (singleton).

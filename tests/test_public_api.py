@@ -27,10 +27,16 @@ class TestTopLevelExports:
         "ActorLike",
         "PolicyRegistry",
         "AuthzConfig",
+        "AuthzBypassError",
         "AuthzError",
         "AuthorizationDenied",
         "NoPolicyError",
         "PolicyCompilationError",
+        "WriteDeniedError",
+        "explain_access",
+        "explain_query",
+        "safe_get",
+        "safe_get_or_raise",
     }
 
     def test_all_expected_symbols_importable(self) -> None:
@@ -229,7 +235,13 @@ class TestCompilerExports:
 class TestSessionExports:
     """Verify sqla_authz.session exports."""
 
-    EXPECTED = {"authorized_sessionmaker", "AuthorizationContext", "install_interceptor"}
+    EXPECTED = {
+        "authorized_sessionmaker",
+        "AuthorizationContext",
+        "install_interceptor",
+        "safe_get",
+        "safe_get_or_raise",
+    }
 
     def test_all_expected_symbols_importable(self) -> None:
         from sqla_authz.session import (
@@ -324,20 +336,40 @@ class TestTestingExports:
         "authz_registry",
         "authz_config",
         "authz_context",
+        "isolated_authz",
+        "isolated_authz_state",
+        "PolicyCoverage",
+        "PolicyDiff",
+        "PolicyMatrix",
+        "SimulationResult",
+        "assert_policy_sql_snapshot",
+        "diff_policies",
+        "policy_matrix",
+        "simulate_query",
     }
 
     def test_all_expected_symbols_importable(self) -> None:
         from sqla_authz.testing import (
             MockActor,
+            PolicyCoverage,
+            PolicyDiff,
+            PolicyMatrix,
+            SimulationResult,
             assert_authorized,
             assert_denied,
+            assert_policy_sql_snapshot,
             assert_query_contains,
             authz_config,
             authz_context,
             authz_registry,
+            diff_policies,
+            isolated_authz,
+            isolated_authz_state,
             make_admin,
             make_anonymous,
             make_user,
+            policy_matrix,
+            simulate_query,
         )
 
         for sym in [
@@ -351,6 +383,16 @@ class TestTestingExports:
             authz_registry,
             authz_config,
             authz_context,
+            isolated_authz,
+            isolated_authz_state,
+            PolicyCoverage,
+            PolicyDiff,
+            PolicyMatrix,
+            SimulationResult,
+            assert_policy_sql_snapshot,
+            diff_policies,
+            policy_matrix,
+            simulate_query,
         ]:
             assert sym is not None
 
@@ -359,10 +401,14 @@ class TestTestingExports:
             MockActor,
             assert_authorized,
             assert_denied,
+            assert_policy_sql_snapshot,
             assert_query_contains,
+            diff_policies,
             make_admin,
             make_anonymous,
             make_user,
+            policy_matrix,
+            simulate_query,
         )
 
         for sym in [
@@ -373,6 +419,10 @@ class TestTestingExports:
             assert_authorized,
             assert_denied,
             assert_query_contains,
+            assert_policy_sql_snapshot,
+            diff_policies,
+            policy_matrix,
+            simulate_query,
         ]:
             assert callable(sym), f"{sym!r} should be callable"
 
@@ -415,16 +465,33 @@ class TestIntegrationsPackage:
 class TestFastAPIExports:
     """Verify sqla_authz.integrations.fastapi exports."""
 
-    EXPECTED = {"AuthzDep", "configure_authz", "install_error_handlers"}
+    EXPECTED = {
+        "AuthzDep",
+        "configure_authz",
+        "get_actor",
+        "get_session",
+        "install_authz_interceptor",
+        "install_error_handlers",
+    }
 
     def test_all_expected_symbols_importable(self) -> None:
         from sqla_authz.integrations.fastapi import (
             AuthzDep,
             configure_authz,
+            get_actor,
+            get_session,
+            install_authz_interceptor,
             install_error_handlers,
         )
 
-        for sym in [AuthzDep, configure_authz, install_error_handlers]:
+        for sym in [
+            AuthzDep,
+            configure_authz,
+            get_actor,
+            get_session,
+            install_authz_interceptor,
+            install_error_handlers,
+        ]:
             assert sym is not None
 
     def test_callable_symbols(self) -> None:

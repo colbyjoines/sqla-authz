@@ -16,6 +16,7 @@ from sqla_authz.testing._fixtures import (  # noqa: F401
     authz_config,
     authz_context,
     authz_registry,
+    isolated_authz_state,
 )
 
-__all__ = ["authz_config", "authz_context", "authz_registry"]
+__all__ = ["authz_config", "authz_context", "authz_registry", "isolated_authz_state"]

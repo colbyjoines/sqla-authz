@@ -10,7 +10,7 @@ from sqlalchemy import ColumnElement
 from sqla_authz._types import ActorLike
 from sqla_authz.policy._base import PolicyRegistration
 
-__all__ = ["log_policy_evaluation"]
+__all__ = ["log_bypass_event", "log_policy_evaluation"]
 
 logger = logging.getLogger("sqla_authz")
 
@@ -70,3 +70,32 @@ def log_policy_evaluation(
             policy_names,
             result_expr,
         )
+
+
+def log_bypass_event(
+    *,
+    bypass_type: str,
+    entity: type | None = None,
+    statement_hint: str = "",
+    detail: str = "",
+) -> None:
+    """Log a bypass event to a type-specific sub-logger.
+
+    Each bypass type gets its own logger under ``sqla_authz.bypass.<type>``
+    so operators can enable/disable granularly.
+
+    Args:
+        bypass_type: Category of bypass (e.g., ``"column_load"``,
+            ``"skip_authz"``, ``"no_entity"``).
+        entity: The model class involved, if known.
+        statement_hint: A short hint about the statement (truncated to 200 chars).
+        detail: Additional detail about the bypass event.
+    """
+    bypass_logger = logging.getLogger(f"sqla_authz.bypass.{bypass_type}")
+    bypass_logger.warning(
+        "BYPASS:%s entity=%s stmt=%s — %s",
+        bypass_type,
+        entity.__name__ if entity else "<unknown>",
+        statement_hint[:200],
+        detail,
+    )

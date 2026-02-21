@@ -12,8 +12,7 @@ The library claims "pyright strict mode compatible" but has several gaps in type
 1. **Unvalidated config strings** -- `on_missing_policy: str` accepts any string; invalid values silently fall through to deny behavior
 2. **No policy registration validation** -- `registry.register()` accepts any callable with no signature checking
 3. **Thread safety** -- `PolicyRegistry` has a data race in `register()` (non-atomic check-then-append)
-4. **Flask integration type fragility** -- Relies on `app.extensions["sqla_authz"]` (`dict[str, Any]`) with untyped dict access
-5. **Global singleton test isolation** -- Manual `clear()`/`_reset_global_config()` is fragile and easy to forget
+4. **Global singleton test isolation** -- Manual `clear()`/`_reset_global_config()` is fragile and easy to forget
 
 ---
 
@@ -322,80 +321,7 @@ class PolicyRegistry:
 
 ---
 
-## Issue 4: Flask Integration Type Safety
-
-### Current State
-
-Pyright currently reports 0 errors (as of the latest codebase). The existing `pyright: ignore` comments handle the known issues:
-- `reportUnusedFunction` on error handlers (lines 99, 103)
-- `reportUnusedImport` on the flask import guard (\_\_init\_\_.py line 6)
-
-However, the extension relies on `app.extensions["sqla_authz"]` which is `dict[str, Any]`, requiring untyped dict access in `authorize_query()`:
-
-```python
-ext_state: dict[str, Any] = current_app.extensions["sqla_authz"]
-actor_provider: Callable[[], ActorLike] = ext_state["actor_provider"]
-```
-
-This is fragile -- key typos, missing keys, and type mismatches are invisible to the type checker.
-
-### Fix
-
-**Step 1: Define a typed `TypedDict` for the extension state**
-
-```python
-from typing import TypedDict
-
-class _AuthzExtState(TypedDict):
-    actor_provider: Callable[[], ActorLike]
-    default_action: str
-    registry: PolicyRegistry | None
-    config: AuthzConfig | None
-```
-
-**Step 2: Use it in `init_app()` and `authorize_query()`**
-
-```python
-def init_app(self, app: Flask) -> None:
-    state: _AuthzExtState = {
-        "actor_provider": self._actor_provider,
-        "default_action": self._default_action,
-        "registry": self._registry,
-        "config": self._config,
-    }
-    app.extensions["sqla_authz"] = state  # type: ignore[assignment]
-    ...
-
-def authorize_query(self, stmt: Select[Any], *, action: str | None = None) -> Select[Any]:
-    ext_state = cast("_AuthzExtState", current_app.extensions["sqla_authz"])
-    actor_provider = ext_state["actor_provider"]
-    ...
-```
-
-The `cast` is necessary because `app.extensions` is `dict[str, Any]`. The `TypedDict` ensures that within our code, key access is type-checked -- a typo like `ext_state["actor_provder"]` would be caught by pyright.
-
-**Step 3: Keep existing `pyright: ignore` comments**
-
-The `reportUnusedFunction` ignores on error handlers are correct -- Flask's `@app.errorhandler` registers them via side effect, so pyright correctly flags them as "unused" from a local analysis perspective.
-
-### Files Changed
-
-| File | Change |
-|------|--------|
-| `src/sqla_authz/integrations/flask/_extension.py` | Add `_AuthzExtState` TypedDict, use `cast()` in `authorize_query()`, typed dict literal in `init_app()` |
-
-### Backward Compatibility
-
-- **Fully backward compatible**: Internal-only change. The public API is unchanged.
-
-### Test Cases
-
-1. Existing Flask integration tests continue to pass
-2. `uv run pyright src/sqla_authz/integrations/flask/` reports 0 errors
-
----
-
-## Issue 5: Global Singleton Test Isolation
+## Issue 4: Global Singleton Test Isolation
 
 ### Current Behavior
 
@@ -559,7 +485,6 @@ Execute in this order to minimize risk and allow incremental testing:
 ### Phase 1: Type foundations (no behavior changes)
 1. Add `OnMissingPolicy` type alias to `_types.py`
 2. Add `PolicyFunction` protocol to `_types.py`
-3. Add `_AuthzExtState` TypedDict to Flask extension
 
 ### Phase 2: Config validation (small behavior change)
 4. Change `AuthzConfig.on_missing_policy` type to `OnMissingPolicy`
@@ -591,8 +516,7 @@ Execute in this order to minimize risk and allow incremental testing:
 | `src/sqla_authz/_types.py` | Add `OnMissingPolicy`, `PolicyFunction` | 1, 2 |
 | `src/sqla_authz/config/_config.py` | Literal type, `__post_init__`, updated signatures | 1 |
 | `src/sqla_authz/policy/_registry.py` | `threading.Lock`, `_validate_policy_signature` | 2, 3 |
-| `src/sqla_authz/integrations/flask/_extension.py` | `_AuthzExtState` TypedDict, `cast()` | 4 |
-| `src/sqla_authz/testing/_isolation.py` | New: `isolated_authz` context manager | 5 |
+| `src/sqla_authz/testing/_isolation.py` | New: `isolated_authz` context manager | 4 |
 | `src/sqla_authz/testing/_fixtures.py` | Add `isolated_authz_state` fixture | 5 |
 | `src/sqla_authz/testing/_plugin.py` | Re-export new fixture | 5 |
 | `tests/test_config/test_config.py` | Add validation tests, update for Literal type | 1 |

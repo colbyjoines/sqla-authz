@@ -2,11 +2,34 @@
 
 from __future__ import annotations
 
-from typing import Protocol, runtime_checkable
+from typing import Literal, Protocol, runtime_checkable
 
 from sqlalchemy import ColumnElement
 
-__all__ = ["ActorLike", "FilterExpression"]
+__all__ = [
+    "ActorLike",
+    "FilterExpression",
+    "OnBypassAction",
+    "OnMissingPolicy",
+    "OnSkipAuthz",
+    "OnUnloadedRelationship",
+    "OnWriteDenied",
+]
+
+# Valid values for AuthzConfig.on_missing_policy.
+OnMissingPolicy = Literal["deny", "raise"]
+
+# Valid values for AuthzConfig.on_unloaded_relationship.
+OnUnloadedRelationship = Literal["deny", "raise", "warn"]
+
+# Valid values for strict-mode bypass handling.
+OnBypassAction = Literal["ignore", "warn", "raise"]
+
+# Valid values for skip_authz bypass handling.
+OnSkipAuthz = Literal["ignore", "warn", "log"]
+
+# Valid values for write authorization denial behavior.
+OnWriteDenied = Literal["raise", "filter"]
 
 
 @runtime_checkable

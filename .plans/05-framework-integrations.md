@@ -1,11 +1,12 @@
-# Plan 05: Framework Integrations Rewrite (FastAPI + Flask)
+# Plan 05: FastAPI Integration Rewrite
 
 ## Problem Statement
 
-The FastAPI and Flask integrations are "checkbox features" that don't expose the library's
-core value proposition (the `do_orm_execute` interceptor with `with_loader_criteria`). Both
-integrations have correctness bugs and design issues that make them unsuitable for
-production use.
+The FastAPI integration is a "checkbox feature" that doesn't expose the library's
+core value proposition (the `do_orm_execute` interceptor with `with_loader_criteria`).
+It has correctness bugs and design issues that make it unsuitable for production use.
+
+> **Note:** The Flask integration has been removed from scope. Focus is exclusively on FastAPI.
 
 ### FastAPI Issues
 
@@ -21,17 +22,6 @@ production use.
 4. **No interceptor integration** -- the library's best feature (`install_interceptor` /
    `authorized_sessionmaker`) is not exposed at all. Users must manually call
    `authorize_query()` for every statement.
-
-### Flask Issues
-
-1. **28 pyright errors** from Flask's poor typing (`app.extensions` is `dict[str, Any]`).
-   Every access to `ext_state["actor_provider"]` etc. is untyped.
-2. **No Flask-SQLAlchemy integration** -- requires users to manage their own `sessionmaker`,
-   which is unusual in Flask apps that use `flask-sqlalchemy`.
-3. **No interceptor integration** -- same as FastAPI. The `authorize_query()` wrapper saves
-   one argument (actor) but users still call it manually per-query.
-4. **`authorize_query()` wrapper is thin** -- saves only the actor resolution. Users still
-   pass `stmt` and optionally `action`. Minimal value over calling the core API directly.
 
 ---
 
@@ -289,169 +279,6 @@ __all__ = [
 
 ---
 
-## Design: Flask Rewrite
-
-### New Module Layout
-
-```
-src/sqla_authz/integrations/flask/
-    __init__.py          # re-exports, import guard
-    _extension.py        # AuthzExtension (rewritten with type safety)
-```
-
-### 1. Fix Pyright Errors with Typed Extension State
-
-Replace the untyped `app.extensions["sqla_authz"]` dict with a proper typed dataclass:
-
-```python
-from dataclasses import dataclass
-
-@dataclass
-class _AuthzExtensionState:
-    """Typed internal state stored on app.extensions."""
-    actor_provider: Callable[[], ActorLike]
-    default_action: str
-    registry: PolicyRegistry | None
-    config: AuthzConfig | None
-    db: Any | None  # Flask-SQLAlchemy instance (optional)
-```
-
-Access pattern with cast:
-```python
-def _get_state(self) -> _AuthzExtensionState:
-    ext_data: Any = current_app.extensions["sqla_authz"]
-    return cast("_AuthzExtensionState", ext_data)
-```
-
-This eliminates all 28 pyright errors from accessing untyped dict values.
-
-### 2. Flask-SQLAlchemy Integration
-
-Add optional `db` parameter to accept a Flask-SQLAlchemy instance:
-
-```python
-class AuthzExtension:
-    def __init__(
-        self,
-        app: Flask | None = None,
-        *,
-        actor_provider: Callable[[], ActorLike],
-        default_action: str = "read",
-        registry: PolicyRegistry | None = None,
-        config: AuthzConfig | None = None,
-        db: Any | None = None,  # NEW: Flask-SQLAlchemy SQLAlchemy instance
-    ) -> None:
-        self._actor_provider = actor_provider
-        self._default_action = default_action
-        self._registry = registry
-        self._config = config
-        self._db = db
-        if app is not None:
-            self.init_app(app)
-```
-
-When `db` is provided, the extension can:
-1. Auto-install the interceptor on `db.session` (the scoped session factory).
-2. Provide a `get_session()` helper that returns `db.session`.
-
-```python
-def init_app(self, app: Flask) -> None:
-    state = _AuthzExtensionState(
-        actor_provider=self._actor_provider,
-        default_action=self._default_action,
-        registry=self._registry,
-        config=self._config,
-        db=self._db,
-    )
-    app.extensions["sqla_authz"] = state
-    self._register_error_handlers(app)
-```
-
-### 3. Interceptor Support via `install_interceptor()`
-
-Add a method on `AuthzExtension` that installs the `do_orm_execute` hook:
-
-```python
-def install_interceptor(
-    self,
-    session_factory: sessionmaker[Session] | None = None,
-    *,
-    action: str | None = None,
-) -> None:
-    """Install automatic authorization on a session factory.
-
-    If no session_factory is provided and a Flask-SQLAlchemy `db` was
-    passed to the constructor, uses `db.session` automatically.
-
-    Args:
-        session_factory: Optional explicit sessionmaker. Defaults to
-            the Flask-SQLAlchemy session if `db` was provided.
-        action: Override default action. Defaults to extension's
-            default_action.
-
-    Raises:
-        ValueError: If no session_factory provided and no db configured.
-
-    Example::
-
-        from flask_sqlalchemy import SQLAlchemy
-        db = SQLAlchemy(app)
-        authz = AuthzExtension(app, actor_provider=get_user, db=db)
-        authz.install_interceptor()
-        # Now ALL queries through db.session are automatically authorized
-    """
-    if session_factory is None:
-        if self._db is None:
-            raise ValueError(
-                "No session_factory provided and no Flask-SQLAlchemy db configured. "
-                "Pass either session_factory= or db= to AuthzExtension."
-            )
-        # Flask-SQLAlchemy's db.session is a scoped_session wrapping a sessionmaker
-        session_factory = self._db.session
-
-    effective_action = action if action is not None else self._default_action
-
-    from sqla_authz.session._interceptor import install_interceptor as _install
-
-    _install(
-        session_factory,
-        actor_provider=self._actor_provider,
-        action=effective_action,
-        registry=self._registry,
-        config=self._config,
-    )
-```
-
-### 4. Better Error Handler Typing
-
-Fix the error handler return type annotations to satisfy pyright:
-
-```python
-def _register_error_handlers(self, app: Flask) -> None:
-    @app.errorhandler(AuthorizationDenied)
-    def handle_authz_denied(
-        exc: AuthorizationDenied,
-    ) -> tuple[Response, int]:
-        return jsonify({"detail": str(exc)}), 403
-
-    @app.errorhandler(NoPolicyError)
-    def handle_no_policy(
-        exc: NoPolicyError,
-    ) -> tuple[Response, int]:
-        return jsonify({"detail": str(exc)}), 500
-```
-
-### 5. Updated `__init__.py` Exports
-
-```python
-# flask/__init__.py (unchanged exports, but AuthzExtension gains new methods)
-from sqla_authz.integrations.flask._extension import AuthzExtension
-
-__all__ = ["AuthzExtension"]
-```
-
----
-
 ## File-by-File Change Summary
 
 ### FastAPI
@@ -463,20 +290,12 @@ __all__ = ["AuthzExtension"]
 | `fastapi/_middleware.py` | **New file** | `install_authz_interceptor()` wrapper around core `install_interceptor` |
 | `fastapi/__init__.py` | **Update** | Add new exports: `install_authz_interceptor`, `get_actor`, `get_session` |
 
-### Flask
-
-| File | Action | Changes |
-|------|--------|---------|
-| `flask/_extension.py` | **Rewrite** | `_AuthzExtensionState` dataclass; `db` param; `install_interceptor()` method; typed error handlers |
-| `flask/__init__.py` | **No change** | Exports remain the same |
-
 ### Tests
 
 | File | Action | Changes |
 |------|--------|---------|
 | `test_fastapi/test_dependencies.py` | **Extend** | Add async session tests; `pk_column` tests; DI override tests |
 | `test_fastapi/test_middleware.py` | **New file** | Test interceptor integration with async test client |
-| `test_flask/test_extension.py` | **Extend** | Add `install_interceptor()` tests; Flask-SQLAlchemy integration tests |
 
 ---
 
@@ -553,40 +372,6 @@ class TestInterceptorMiddleware:
         ...
 ```
 
-### Flask Tests
-
-```python
-# test_extension.py additions:
-
-class TestInterceptorInstall:
-    """AuthzExtension.install_interceptor() works."""
-
-    def test_interceptor_auto_filters_queries(self, app, db_session):
-        """After install_interceptor(), queries are auto-filtered."""
-        ...
-
-    def test_interceptor_with_flask_sqlalchemy_db(self, app, db):
-        """install_interceptor() uses db.session when db= is provided."""
-        ...
-
-    def test_interceptor_raises_without_factory_or_db(self):
-        """ValueError when no session_factory and no db."""
-        ext = AuthzExtension(actor_provider=lambda: Actor(id=1))
-        with pytest.raises(ValueError, match="No session_factory"):
-            ext.install_interceptor()
-
-
-class TestTypedState:
-    """Extension state is properly typed."""
-
-    def test_state_is_dataclass(self, app_with_policies):
-        """Extension state is _AuthzExtensionState, not raw dict."""
-        with app_with_policies.app_context():
-            state = current_app.extensions["sqla_authz"]
-            assert hasattr(state, "actor_provider")
-            assert hasattr(state, "default_action")
-```
-
 ---
 
 ## Migration Guide
@@ -639,31 +424,6 @@ install_authz_interceptor(
 async def list_posts(session: AsyncSession = Depends(get_session)):
     result = await session.execute(select(Post))
     return result.scalars().all()  # automatically filtered!
-```
-
-### Flask: Adding Interceptor Support
-
-**Before (v0.x):**
-```python
-authz = AuthzExtension(app, actor_provider=get_current_user)
-
-@app.get("/posts")
-def list_posts():
-    stmt = select(Post)
-    stmt = authz.authorize_query(stmt)  # manual per-route
-    return session.execute(stmt).scalars().all()
-```
-
-**After (v1.x) -- with Flask-SQLAlchemy:**
-```python
-db = SQLAlchemy(app)
-authz = AuthzExtension(app, actor_provider=get_current_user, db=db)
-authz.install_interceptor()
-
-@app.get("/posts")
-def list_posts():
-    # No authorize_query() needed -- interceptor handles it
-    return db.session.execute(select(Post)).scalars().all()
 ```
 
 ### PK Column Migration
@@ -749,65 +509,20 @@ async def get_post(post_id: int, session: AsyncSession = Depends(get_session)):
     return post
 ```
 
-### Flask: Complete Flask-SQLAlchemy Example
-
-```python
-"""Full Flask example with Flask-SQLAlchemy and interceptor."""
-from flask import Flask, g
-from flask_sqlalchemy import SQLAlchemy
-
-from sqla_authz import policy
-from sqla_authz.integrations.flask import AuthzExtension
-
-# --- Setup ---
-app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db"
-db = SQLAlchemy(app)
-
-# --- Extension with interceptor ---
-authz = AuthzExtension(
-    app,
-    actor_provider=lambda: g.current_user,
-    db=db,
-)
-authz.install_interceptor()
-
-# --- Policies ---
-@policy(Post, "read")
-def post_read(actor):
-    return (Post.is_published == True) | (Post.author_id == actor.id)
-
-# --- Routes (no authorization code needed!) ---
-@app.get("/posts")
-def list_posts():
-    posts = db.session.execute(select(Post)).scalars().all()
-    return [p.to_dict() for p in posts]
-
-# authorize_query() still works for fine-grained control:
-@app.get("/admin/posts")
-def admin_posts():
-    stmt = select(Post)
-    stmt = authz.authorize_query(stmt, action="admin_read")
-    return db.session.execute(stmt).scalars().all()
-```
-
 ---
 
 ## Implementation Order
 
-1. **Flask type fixes** -- lowest risk, fixes pyright errors, no API changes.
-2. **FastAPI `pk_column` param** -- small, backward-compatible addition.
-3. **FastAPI async session support** -- runtime `isinstance` check in `_resolve()`.
-4. **Flask `_AuthzExtensionState` dataclass** -- internal refactor, no API change.
-5. **Flask `db` param + `install_interceptor()` method** -- new feature, additive.
-6. **FastAPI `_middleware.py`** -- new file, `install_authz_interceptor()` wrapper.
-7. **FastAPI DI refactor** -- `get_actor`/`get_session` sentinel deps, deprecate `configure_authz()`.
-8. **Tests for all new features** -- extend existing test files, add `test_middleware.py`.
-9. **Update `__init__.py` exports** for both frameworks.
-10. **Documentation examples** in docstrings.
+1. **FastAPI `pk_column` param** -- small, backward-compatible addition.
+2. **FastAPI async session support** -- runtime `isinstance` check in `_resolve()`.
+3. **FastAPI `_middleware.py`** -- new file, `install_authz_interceptor()` wrapper.
+4. **FastAPI DI refactor** -- `get_actor`/`get_session` sentinel deps, deprecate `configure_authz()`.
+5. **Tests for all new features** -- extend existing test files, add `test_middleware.py`.
+6. **Update `__init__.py` exports**.
+7. **Documentation examples** in docstrings.
 
-Steps 1-4 can be done independently. Steps 5-6 depend on understanding the interceptor
-(already read). Step 7 is the most invasive change and should be done last.
+Steps 1-2 can be done independently. Step 3 depends on understanding the interceptor
+(already read). Step 4 is the most invasive change and should be done last.
 
 ---
 
@@ -817,7 +532,6 @@ Steps 1-4 can be done independently. Steps 5-6 depend on understanding the inter
 |------|--------|------------|
 | `configure_authz()` deprecation breaks users | Medium | Keep it working, just emit warning. Remove in v2.0 |
 | `isinstance(session, AsyncSession)` import failure | Low | Lazy import with try/except, fallback to sync |
-| Flask-SQLAlchemy `db.session` is `scoped_session`, not `sessionmaker` | Medium | `install_interceptor` already accepts sessionmaker; need to verify it works with `scoped_session` or extract the underlying factory |
 | Interceptor `actor_provider` called outside request context | High | Document the `contextvars` pattern clearly; raise helpful error if context var is unset |
 | `with_loader_criteria` doesn't work with `async_sessionmaker` | Low | SQLAlchemy 2.0 async supports `do_orm_execute` events; verify in tests |
 
@@ -831,11 +545,7 @@ Steps 1-4 can be done independently. Steps 5-6 depend on understanding the inter
    in SQLAlchemy 2.0. If not, we need to type-widen the core function or add an async
    variant.
 
-2. **Should Flask-SQLAlchemy be an optional dependency?**
-   Current approach: `db` parameter is `Any | None`, no import of `flask_sqlalchemy` at
-   module level. This means zero extra dependencies. The typing is loose but pragmatic.
-
-3. **Should `AuthzDep` support composite primary keys?**
+2. **Should `AuthzDep` support composite primary keys?**
    Current plan only handles single-column PKs via `pk_column`. Composite PKs would need
    `pk_columns: list[str]` and multiple `request.path_params` lookups. Defer to v2.0
    unless users request it.

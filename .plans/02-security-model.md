@@ -403,7 +403,7 @@ Export from `__init__.py` as `safe_get` and `safe_get_or_raise`.
 - Integration with structured logging (JSON)
 
 ## Recommendations by Use Case
-- Web API (FastAPI/Flask): strict_mode=True, on_missing_policy="raise"
+- Web API (FastAPI): strict_mode=True, on_missing_policy="raise"
 - Admin/Internal Tool: skip_authz for admin routes, audit_bypasses=True
 - Background Jobs: explicit skip_authz with logging
 - Multi-tenant: per-session registry + strict_mode

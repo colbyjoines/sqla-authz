@@ -22,17 +22,43 @@ from sqla_authz.testing._assertions import (
     assert_denied,
     assert_query_contains,
 )
-from sqla_authz.testing._fixtures import authz_config, authz_context, authz_registry
+from sqla_authz.testing._fixtures import (
+    authz_config,
+    authz_context,
+    authz_registry,
+    isolated_authz_state,
+)
+from sqla_authz.testing._isolation import isolated_authz
+from sqla_authz.testing._simulation import (
+    PolicyCoverage,
+    PolicyDiff,
+    PolicyMatrix,
+    SimulationResult,
+    assert_policy_sql_snapshot,
+    diff_policies,
+    policy_matrix,
+    simulate_query,
+)
 
 __all__ = [
     "MockActor",
+    "PolicyCoverage",
+    "PolicyDiff",
+    "PolicyMatrix",
+    "SimulationResult",
     "assert_authorized",
     "assert_denied",
+    "assert_policy_sql_snapshot",
     "assert_query_contains",
     "authz_config",
     "authz_context",
     "authz_registry",
+    "diff_policies",
+    "isolated_authz",
+    "isolated_authz_state",
     "make_admin",
     "make_anonymous",
     "make_user",
+    "policy_matrix",
+    "simulate_query",
 ]

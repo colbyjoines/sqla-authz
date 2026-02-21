@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 from sqlalchemy import select
 
+from sqla_authz.compiler._eval import eval_expression
 from sqla_authz.compiler._expression import evaluate_policies
 from sqla_authz.compiler._query import authorize_query
 from sqla_authz.compiler._relationship import traverse_relationship_path
@@ -226,3 +227,54 @@ class TestRelationshipTraversal:
             relationship_session.execute(stmt).scalars().all()
 
         benchmark(run)
+
+
+# ---------------------------------------------------------------------------
+# eval_expression benchmarks (in-memory AST evaluation)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.benchmark
+class TestEvalExpression:
+    """Benchmark eval_expression for in-memory point checks."""
+
+    def test_eval_simple_equality(self, benchmark, bench_session, mock_actor):
+        """eval_expression with simple is_published == True."""
+        post = BenchPost(id=9990, title="Bench", is_published=True, author_id=1)
+        bench_session.add(post)
+        bench_session.flush()
+        bench_session.expunge(post)
+
+        expr = BenchPost.is_published == True  # noqa: E712
+        benchmark(eval_expression, expr, post)
+
+    def test_eval_actor_binding(self, benchmark, bench_session, mock_actor):
+        """eval_expression with actor-bound comparison."""
+        post = BenchPost(id=9991, title="Bench", is_published=True, author_id=1)
+        bench_session.add(post)
+        bench_session.flush()
+        bench_session.expunge(post)
+
+        expr = BenchPost.author_id == mock_actor.id
+        benchmark(eval_expression, expr, post)
+
+    def test_eval_or_expression(self, benchmark, bench_session, mock_actor):
+        """eval_expression with OR of two conditions."""
+        post = BenchPost(id=9992, title="Bench", is_published=True, author_id=1)
+        bench_session.add(post)
+        bench_session.flush()
+        bench_session.expunge(post)
+
+        expr = (BenchPost.is_published == True) | (BenchPost.author_id == mock_actor.id)  # noqa: E712
+        benchmark(eval_expression, expr, post)
+
+    def test_eval_full_can_check(self, benchmark, bench_session, simple_registry, mock_actor):
+        """Full can() using eval_expression (policy eval + AST walk)."""
+        from sqla_authz._checks import can
+
+        post = BenchPost(id=9993, title="Bench", is_published=True, author_id=1)
+        bench_session.add(post)
+        bench_session.flush()
+        bench_session.expunge(post)
+
+        benchmark(can, mock_actor, "read", post, registry=simple_registry)
