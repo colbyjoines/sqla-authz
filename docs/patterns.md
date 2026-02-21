@@ -2,74 +2,155 @@
 
 Practical authorization patterns for common use cases.
 
-## Resource ownership
+---
 
-Allow users to access only their own resources:
+## Role-Based Access Control (RBAC)
+
+RBAC assigns permissions based on an actor's role. sqla-authz makes this natural:
+the `actor.role` check happens in Python, and the resulting filter runs in SQL.
+
+### Hierarchical roles
+
+Map a role hierarchy to progressively wider filters. Multiple actions
+get distinct policies — each returns the right filter for that role level:
 
 ```python
+from sqlalchemy import ColumnElement, or_, true, false
 from sqla_authz import policy
 
+ROLE_RANK = {"viewer": 0, "editor": 1, "manager": 2, "admin": 3}
+
 @policy(Post, "read")
-def own_posts(actor):
-    return Post.author_id == actor.id
+def post_read(actor: User) -> ColumnElement[bool]:
+    rank = ROLE_RANK.get(actor.role, 0)
+    if rank >= ROLE_RANK["admin"]:
+        return true()
+    if rank >= ROLE_RANK["editor"]:
+        return or_(Post.is_published == True, Post.author_id == actor.id)
+    return Post.is_published == True
 
 @policy(Post, "update")
-def own_posts_update(actor):
-    return Post.author_id == actor.id
-```
+def post_update(actor: User) -> ColumnElement[bool]:
+    rank = ROLE_RANK.get(actor.role, 0)
+    if rank >= ROLE_RANK["admin"]:
+        return true()
+    if rank >= ROLE_RANK["editor"]:
+        return Post.author_id == actor.id
+    return false()  # viewers cannot update
 
-## Public/private content toggle
-
-Allow public content to be read by anyone, private content only by the author:
-
-```python
-@policy(Post, "read")
-def published_or_own(actor):
-    return (Post.is_published == True) | (Post.author_id == actor.id)
-```
-
-## Role-based admin bypass
-
-Grant admins full access while restricting other roles:
-
-```python
-from sqlalchemy import true
-
-@policy(Post, "read")
-def admin_or_published(actor):
+@policy(Post, "delete")
+def post_delete(actor: User) -> ColumnElement[bool]:
     if actor.role == "admin":
         return true()
-    return Post.is_published == True
+    return false()
 ```
 
-## Multi-tenant row isolation
+### Multi-tenant with role scoping
 
-Restrict access to resources within the actor's organization:
+Combine role checks with organization isolation — a common SaaS pattern:
 
 ```python
 @policy(Document, "read")
-def same_org(actor):
+def org_scoped_read(actor: User) -> ColumnElement[bool]:
+    if actor.role == "super_admin":
+        return true()
     return Document.org_id == actor.org_id
 
 @policy(Document, "update")
-def same_org_update(actor):
-    return Document.org_id == actor.org_id
+def org_scoped_update(actor: User) -> ColumnElement[bool]:
+    if actor.role in ("admin", "super_admin"):
+        return Document.org_id == actor.org_id
+    if actor.role == "editor":
+        return (Document.org_id == actor.org_id) & (Document.owner_id == actor.id)
+    return false()
 ```
 
-## Combining multiple policies
+---
 
-Multiple policies for the same `(model, action)` are OR'd together.
-Any matching policy grants access:
+## Attribute-Based Access Control (ABAC)
+
+ABAC makes decisions based on attributes of the actor, the resource, or the
+environment. Because policies are plain Python that return SQL expressions,
+you can mix Python-side attribute checks with SQL-side column filters freely.
+
+### Sensitivity levels
+
+Restrict access based on a document's classification vs. the actor's clearance:
 
 ```python
-@policy(Post, "read")
-def published_posts(actor):
+from sqlalchemy import ColumnElement, true
+from sqla_authz import policy
+
+CLEARANCE = {"public": 0, "internal": 1, "confidential": 2, "secret": 3}
+
+@policy(Document, "read")
+def clearance_check(actor: User) -> ColumnElement[bool]:
+    level = CLEARANCE.get(actor.clearance, 0)
+    if level >= CLEARANCE["secret"]:
+        return true()
+    if level >= CLEARANCE["confidential"]:
+        return Document.classification.in_(["public", "internal", "confidential"])
+    if level >= CLEARANCE["internal"]:
+        return Document.classification.in_(["public", "internal"])
+    return Document.classification == "public"
+```
+
+### Status workflow with time gating
+
+Combine content status, actor relationship, and time-based embargo in one policy:
+
+```python
+from datetime import datetime, timezone
+from sqlalchemy import ColumnElement, or_, true
+
+@policy(Article, "read")
+def workflow_visibility(actor: User) -> ColumnElement[bool]:
+    if actor.role == "admin":
+        return true()
+    now = datetime.now(timezone.utc)
+    return or_(
+        Article.status == "published",
+        (Article.status == "review") & (Article.reviewer_id == actor.id),
+        (Article.status == "draft") & (Article.author_id == actor.id),
+    ) & or_(
+        Article.embargo_date.is_(None),
+        Article.embargo_date <= now,
+    )
+```
+
+---
+
+## Composable predicates
+
+Extract repeated conditions into reusable predicates with `&`, `|`, `~`:
+
+```python
+from sqla_authz.policy import predicate
+
+@predicate
+def is_published(actor: User) -> ColumnElement[bool]:
     return Post.is_published == True
 
-@policy(Post, "read")
-def own_drafts(actor):
-    return (Post.is_published == False) & (Post.author_id == actor.id)
+@predicate
+def is_author(actor: User) -> ColumnElement[bool]:
+    return Post.author_id == actor.id
+
+@predicate
+def is_same_org(actor: User) -> ColumnElement[bool]:
+    return Post.author.has(User.org_id == actor.org_id)
+
+# Compose with operators
+public_or_own = is_published | is_author
+own_in_org    = is_author & is_same_org
+
+@policy(Post, "read", predicate=public_or_own)
+def post_read(actor: User) -> ColumnElement[bool]: ...
+
+@policy(Post, "update", predicate=own_in_org)
+def post_update(actor: User) -> ColumnElement[bool]: ...
 ```
+
+---
 
 ## Query-level authorization
 
@@ -83,7 +164,7 @@ stmt = select(Post).order_by(Post.created_at.desc())
 stmt = authorize_query(stmt, actor=current_user, action="read")
 result = session.execute(stmt)
 
-# Async
+# Async — same code, just await
 stmt = select(Post).order_by(Post.created_at.desc())
 stmt = authorize_query(stmt, actor=current_user, action="read")
 result = await session.execute(stmt)
@@ -91,14 +172,13 @@ result = await session.execute(stmt)
 
 ## Point checks on single instances
 
-Check authorization on a specific resource:
+Check authorization on a specific resource without a database round-trip:
 
 ```python
 from sqla_authz import can, authorize
 
 # Returns True/False
 if can(current_user, "update", post):
-    # proceed with update
     ...
 
 # Raises AuthorizationDenied if denied

@@ -139,17 +139,33 @@ class TestTopLevelExports:
 class TestPolicyExports:
     """Verify sqla_authz.policy exports."""
 
-    EXPECTED = {"policy", "PolicyRegistry", "PolicyRegistration", "get_default_registry"}
+    EXPECTED = {
+        "Predicate",
+        "PolicyRegistration",
+        "PolicyRegistry",
+        "always_allow",
+        "always_deny",
+        "get_default_registry",
+        "policy",
+        "predicate",
+    }
 
     def test_all_expected_symbols_importable(self) -> None:
         from sqla_authz.policy import (
+            Predicate,
             PolicyRegistration,
             PolicyRegistry,
+            always_allow,
+            always_deny,
             get_default_registry,
             policy,
+            predicate,
         )
 
-        for sym in [policy, PolicyRegistry, PolicyRegistration, get_default_registry]:
+        for sym in [
+            policy, PolicyRegistry, PolicyRegistration, get_default_registry,
+            Predicate, predicate, always_allow, always_deny,
+        ]:
             assert sym is not None
 
     def test_callable_symbols(self) -> None:
