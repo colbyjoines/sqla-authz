@@ -12,7 +12,13 @@ from sqla_authz._types import (
     OnWriteDenied,
 )
 
-__all__ = ["AuthzConfig", "configure", "get_global_config", "_reset_global_config", "_set_global_config"]
+__all__ = [
+    "AuthzConfig",
+    "configure",
+    "get_global_config",
+    "_reset_global_config",
+    "_set_global_config",
+]
 
 _VALID_POLICIES: set[str] = {"deny", "raise"}
 _VALID_UNLOADED_RELATIONSHIP: set[str] = {"deny", "raise", "warn"}

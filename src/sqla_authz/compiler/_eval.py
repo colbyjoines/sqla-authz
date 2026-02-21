@@ -211,11 +211,12 @@ def _eval_binary(expr: BinaryExpression[Any], instance: DeclarativeBase) -> bool
         # so extract them via the .clauses attribute.
         right = expr.right
         if hasattr(right, "clauses"):
-            bounds = [_resolve_value(c, instance) for c in right.clauses]
+            bounds: list[Any] = [_resolve_value(c, instance) for c in right.clauses]
         else:
-            bounds = _resolve_value(right, instance)
-        if isinstance(bounds, list) and len(bounds) == 2:
-            return bounds[0] <= val <= bounds[1]
+            raw = _resolve_value(right, instance)
+            bounds = raw if isinstance(raw, list) else [raw]  # pyright: ignore[reportUnknownVariableType]  # SA stubs
+        if len(bounds) == 2:
+            return bounds[0] <= val <= bounds[1]  # pyright: ignore[reportUnknownMemberType]  # SA stubs
         return False
 
     # --- String containment operators ---
@@ -227,12 +228,16 @@ def _eval_binary(expr: BinaryExpression[Any], instance: DeclarativeBase) -> bool
     if op is sa_operators.startswith_op:
         left_val = _resolve_value(expr.left, instance)
         right_val = _resolve_value(expr.right, instance)
-        return isinstance(left_val, str) and isinstance(right_val, str) and left_val.startswith(right_val)
+        if isinstance(left_val, str) and isinstance(right_val, str):
+            return left_val.startswith(right_val)
+        return False
 
     if op is sa_operators.endswith_op:
         left_val = _resolve_value(expr.left, instance)
         right_val = _resolve_value(expr.right, instance)
-        return isinstance(left_val, str) and isinstance(right_val, str) and left_val.endswith(right_val)
+        if isinstance(left_val, str) and isinstance(right_val, str):
+            return left_val.endswith(right_val)
+        return False
 
     # --- Standard comparison operators (eq, ne, lt, le, gt, ge, is_, is_not) ---
     py_op = _OPERATOR_MAP.get(op)

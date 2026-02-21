@@ -279,6 +279,24 @@ class TestStrictModeConfigValidation:
         with pytest.raises(ValueError, match="on_skip_authz"):
             AuthzConfig(on_skip_authz="raise")  # type: ignore[arg-type]
 
+    def test_valid_on_write_denied_values(self) -> None:
+        for val in ("raise", "filter"):
+            config = AuthzConfig(on_write_denied=val)  # type: ignore[arg-type]
+            assert config.on_write_denied == val
+
+    def test_invalid_on_write_denied_raises(self) -> None:
+        with pytest.raises(ValueError, match="on_write_denied"):
+            AuthzConfig(on_write_denied="invalid")  # type: ignore[arg-type]
+
+    def test_valid_on_unloaded_relationship_values(self) -> None:
+        for val in ("deny", "raise", "warn"):
+            config = AuthzConfig(on_unloaded_relationship=val)  # type: ignore[arg-type]
+            assert config.on_unloaded_relationship == val
+
+    def test_invalid_on_unloaded_relationship_raises(self) -> None:
+        with pytest.raises(ValueError, match="on_unloaded_relationship"):
+            AuthzConfig(on_unloaded_relationship="invalid")  # type: ignore[arg-type]
+
 
 class TestStrictModeConvenience:
     """Test strict_mode=True convenience defaults."""

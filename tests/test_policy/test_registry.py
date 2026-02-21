@@ -151,6 +151,21 @@ class TestPolicyRegistry:
         update_entities = registry.registered_entities("update")
         assert update_entities == {Post}
 
+    def test_registered_keys(self):
+        """registered_keys returns all (model, action) tuples."""
+        registry = PolicyRegistry()
+        registry.register(Post, "read", lambda a: true(), name="p", description="")
+        registry.register(User, "read", lambda a: true(), name="u", description="")
+        registry.register(Post, "update", lambda a: true(), name="pu", description="")
+
+        keys = registry.registered_keys()
+        assert keys == {(Post, "read"), (User, "read"), (Post, "update")}
+
+    def test_registered_keys_empty(self):
+        """registered_keys returns empty set when no policies registered."""
+        registry = PolicyRegistry()
+        assert registry.registered_keys() == set()
+
 
 class TestPolicyRegistryThreadSafety:
     """Thread safety stress tests for PolicyRegistry."""

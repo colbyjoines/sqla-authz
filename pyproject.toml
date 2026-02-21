@@ -80,6 +80,7 @@ typeCheckingMode = "strict"
 source = ["sqla_authz"]
 
 [tool.coverage.report]
+fail_under = 55
 exclude_also = [
     "if TYPE_CHECKING:",
     "class .*\\bProtocol\\):",

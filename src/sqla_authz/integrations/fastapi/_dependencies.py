@@ -146,7 +146,7 @@ def _make_dependency(
         registry: Optional per-dependency registry override.
     """
     # Import module-level sentinels for Depends references
-    from sqla_authz.integrations.fastapi._dependencies import (
+    from sqla_authz.integrations.fastapi._dependencies import (  # noqa: I001
         get_actor as _get_actor,
         get_session as _get_session,
     )
