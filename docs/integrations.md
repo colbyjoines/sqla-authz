@@ -6,9 +6,11 @@
 pip install sqla-authz[fastapi]
 ```
 
+Two patterns are available. Choose based on how much control you need over queries.
+
 ### Direct Pattern
 
-Call `authorize_query()` in each endpoint — simple, explicit, no setup:
+Call `authorize_query()` in each endpoint. Use this when you need custom query logic (joins, filters, ordering) alongside authorization:
 
 ```python
 from sqla_authz import authorize_query
@@ -23,11 +25,11 @@ async def list_posts(
     return result.scalars().all()
 ```
 
-For single-item endpoints, return **404** (not 403) to avoid revealing resource existence.
+For single-item endpoints, return **404** (not 403) when the authorized query returns nothing — this avoids revealing whether the resource exists.
 
 ### AuthzDep
 
-Register providers once at startup, then use `AuthzDep` as a dependency:
+Register providers once at startup, then inject authorized results directly into endpoints. Use this for straightforward CRUD where you don't need custom query logic:
 
 ```python
 from sqla_authz.integrations.fastapi import AuthzDep, configure_authz, install_error_handlers

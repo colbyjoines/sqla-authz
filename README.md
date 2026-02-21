@@ -6,42 +6,35 @@
 [![codecov](https://codecov.io/gh/colbyjoines/sqla-authz/graph/badge.svg)](https://codecov.io/gh/colbyjoines/sqla-authz)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Row-level authorization for SQLAlchemy 2.0. Define policies as Python functions — no external servers, no custom DSLs.
+Embeddable row-level authorization for SQLAlchemy 2.0. Write policies as Python functions — they compile to SQL WHERE clauses at query time.
 
-Fills the vacuum left by [Oso's deprecation](https://github.com/osohq/oso) (December 2023). No maintained alternative exists that generates SQL query filters for SQLAlchemy 2.0.
+## The Problem
 
-## Why sqla-authz?
+Your application queries data, but not every user should see every row. An author sees their drafts; readers only see published posts. A support agent sees their team's tickets, not the whole company's.
 
-| Feature | sqla-authz | sqlalchemy-oso | PyCasbin | Cerbos |
-|---------|-----------|---------------|----------|--------|
-| SQL filter generation | Yes | Yes (deprecated) | No | Yes (via server) |
-| SQLAlchemy 2.0 (`select()`) | Yes | No | N/A | Yes |
-| AsyncSession | Yes | No | N/A | No |
-| Embedded (no server) | Yes | Yes | Yes | No |
-| Python-native policies | Yes | No (Polar DSL) | No (.conf files) | No (YAML) |
-| Type-safe (pyright strict) | Yes | No | No | No |
+You can scatter `.where()` conditions throughout your codebase, but authorization logic becomes fragile, inconsistent, and impossible to audit. sqla-authz lets you define these rules once as policies and apply them to every query.
 
 ## Quick Start
 
 ```python
+from sqlalchemy import select, ColumnElement, or_, true
 from sqla_authz import policy, authorize_query
-from sqlalchemy import select, ColumnElement, or_
 
-# 1. Define a policy
 @policy(Post, "read")
 def post_read_policy(actor: User) -> ColumnElement[bool]:
-    return or_(
-        Post.is_published == True,
-        Post.author_id == actor.id,
-    )
+    # Admins see everything; others see published posts + their own drafts
+    if actor.role == "admin":
+        return true()
+    return or_(Post.is_published == True, Post.author_id == actor.id)
 
-# 2. Apply authorization to any query
+# Apply to any SELECT — the policy becomes a WHERE clause
 stmt = select(Post).order_by(Post.created_at.desc())
 stmt = authorize_query(stmt, actor=current_user, action="read")
-result = await session.execute(stmt)
-posts = result.scalars().all()
-# SQL: SELECT ... FROM post WHERE (is_published = true OR author_id = :id)
+result = session.execute(stmt)
+# → SELECT ... FROM post WHERE (is_published = true OR author_id = :id)
 ```
+
+No policy for a model? The query returns zero rows — authorization is deny-by-default.
 
 ## Installation
 
@@ -53,23 +46,23 @@ pip install sqla-authz[fastapi]
 
 # With test utilities
 pip install sqla-authz[testing]
-
-# Everything
-pip install sqla-authz[all]
 ```
 
-## Features
+## Why sqla-authz?
 
-- SQLAlchemy 2.0 `select()` style exclusively
-- Both sync `Session` and `AsyncSession`
-- Relationship traversal via `has()`/`any()` (compiles to EXISTS)
-- Composable predicates with `&`, `|`, `~` operators
-- FastAPI integration via dependency injection (`AuthzDep`)
-- Point checks: `can(actor, action, resource)` and `authorize(actor, action, resource)`
-- Audit logging for authorization decisions
-- Consumer test utilities (`sqla_authz.testing`)
-- pyright strict mode compatible
-- Zero runtime dependencies beyond SQLAlchemy
+Most authorization libraries answer a yes/no question: "can this user do this action?" That works for protecting endpoints, but not when you need to **filter a query** — "show me only the rows this user is allowed to see."
+
+sqla-authz generates SQL WHERE clauses from your policies, so the database does the filtering. No post-query Python loops, no N+1 permission checks.
+
+| Feature | sqla-authz | PyCasbin | Cerbos | OpenFGA |
+|---------|-----------|----------|--------|---------|
+| Generates SQL WHERE clauses | Yes | No | Via server | No |
+| SQLAlchemy 2.0 + AsyncSession | Yes | N/A | No | N/A |
+| Runs in-process (no server) | Yes | Yes | No | No |
+| Policies are Python code | Yes | No (.conf) | No (YAML) | No |
+| Type-safe (pyright strict) | Yes | No | No | No |
+
+Previously, [sqlalchemy-oso](https://github.com/osohq/oso) filled this niche but was deprecated in December 2023. sqla-authz is its successor with full SQLAlchemy 2.0 and AsyncSession support.
 
 ## Architecture
 
@@ -94,11 +87,11 @@ graph TD
 
 ### Key Design Decisions
 
-- **Pure Python policies** -- no DSL, no config files. Type-safe, IDE-friendly, debuggable.
-- **SQL-native** -- policies compile to `ColumnElement[bool]`. The database does the filtering.
-- **Explicit by default** -- `authorize_query()` is visible and greppable. Automatic mode is opt-in.
-- **Async-equal** -- same compilation code for `Session` and `AsyncSession`. Filter construction is pure Python (no I/O).
-- **Fail-closed** -- missing policy = zero rows, not a data leak.
+- **Pure Python policies** — no DSL, no config files. Full IDE support: autocomplete, type checking, debugging.
+- **SQL-native** — policies compile to `ColumnElement[bool]`. The database does the filtering, not Python.
+- **Explicit by default** — `authorize_query()` is visible and greppable. Automatic session interception is opt-in.
+- **Async-equal** — same code for `Session` and `AsyncSession`. Filter construction is pure Python with no I/O.
+- **Fail-closed** — missing policy = zero rows, not a data leak.
 
 ## Documentation
 
@@ -107,20 +100,13 @@ Full documentation at [colbyjoines.github.io/sqla-authz](https://colbyjoines.git
 ## Contributing
 
 ```bash
-# Clone and install dev dependencies
 git clone https://github.com/colbyjoines/sqla-authz.git
 cd sqla-authz
 uv pip install -e ".[dev]"
 
-# Run tests
-pytest
-
-# Lint and format
-ruff check src/ tests/
-ruff format src/ tests/
-
-# Type check
-pyright src/
+pytest                      # Run tests
+ruff check src/ tests/      # Lint
+pyright src/                # Type check
 ```
 
 ## License

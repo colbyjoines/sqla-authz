@@ -94,7 +94,6 @@ nav:
   - Testing: testing.md
   - Reference:
     - reference/api.md
-    - reference/changelog.md
 
 extra:
   social:
