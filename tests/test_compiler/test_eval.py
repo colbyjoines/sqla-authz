@@ -363,3 +363,138 @@ class TestUnsupportedExpression:
         expr = func.lower(Post.title)
         with pytest.raises(UnsupportedExpressionError):
             eval_expression(expr, post)
+
+
+# ---------------------------------------------------------------------------
+# LIKE / ILIKE operators
+# ---------------------------------------------------------------------------
+
+
+class TestLikeOperators:
+    """Tests for LIKE, ILIKE, and NOT LIKE pattern matching."""
+
+    def test_like_match(self, session: Session, sample_data):
+        """Post.title.like('%Draft%') matches 'Draft Post'."""
+        post = sample_data["posts"][1]  # title="Draft Post"
+        expr = Post.title.like("%Draft%")
+        assert eval_expression(expr, post) is True
+
+    def test_like_no_match(self, session: Session, sample_data):
+        """Post.title.like('%Draft%') does not match 'Published Post'."""
+        post = sample_data["posts"][0]  # title="Published Post"
+        expr = Post.title.like("%Draft%")
+        assert eval_expression(expr, post) is False
+
+    def test_like_prefix(self, session: Session, sample_data):
+        """Post.title.like('Draft%') matches titles starting with 'Draft'."""
+        post = sample_data["posts"][1]
+        expr = Post.title.like("Draft%")
+        assert eval_expression(expr, post) is True
+
+    def test_like_suffix(self, session: Session, sample_data):
+        """Post.title.like('%Post') matches titles ending with 'Post'."""
+        post = sample_data["posts"][1]
+        expr = Post.title.like("%Post")
+        assert eval_expression(expr, post) is True
+
+    def test_ilike_case_insensitive(self, session: Session, sample_data):
+        """Post.title.ilike('%draft%') matches 'Draft Post' case-insensitively."""
+        post = sample_data["posts"][1]
+        expr = Post.title.ilike("%draft%")
+        assert eval_expression(expr, post) is True
+
+    def test_like_case_sensitive_no_match(self, session: Session, sample_data):
+        """Post.title.like('%draft%') does NOT match 'Draft Post' (case-sensitive)."""
+        post = sample_data["posts"][1]
+        expr = Post.title.like("%draft%")
+        assert eval_expression(expr, post) is False
+
+    def test_not_like(self, session: Session, sample_data):
+        """Post.title.notlike('%Draft%') returns True for non-matching title."""
+        post = sample_data["posts"][0]  # "Published Post"
+        expr = Post.title.notlike("%Draft%")
+        assert eval_expression(expr, post) is True
+
+    def test_not_ilike(self, session: Session, sample_data):
+        """Post.title.notilike('%draft%') returns True for non-matching title."""
+        post = sample_data["posts"][0]
+        expr = Post.title.notilike("%draft%")
+        assert eval_expression(expr, post) is True
+
+    def test_like_underscore_wildcard(self, session: Session, sample_data):
+        """Underscore matches exactly one character."""
+        post = sample_data["posts"][1]  # "Draft Post"
+        expr = Post.title.like("Draf_ Post")
+        assert eval_expression(expr, post) is True
+
+
+# ---------------------------------------------------------------------------
+# BETWEEN operator
+# ---------------------------------------------------------------------------
+
+
+class TestBetweenOperator:
+    """Tests for the BETWEEN operator in point checks."""
+
+    def test_between_match(self, session: Session, sample_data):
+        """Post.id.between(1, 3) matches Post(id=1)."""
+        post = sample_data["posts"][0]  # id=1
+        expr = Post.id.between(1, 3)
+        assert eval_expression(expr, post) is True
+
+    def test_between_no_match(self, session: Session, sample_data):
+        """Post.id.between(10, 100) does not match Post(id=1)."""
+        post = sample_data["posts"][0]
+        expr = Post.id.between(10, 100)
+        assert eval_expression(expr, post) is False
+
+    def test_between_boundary_inclusive(self, session: Session, sample_data):
+        """BETWEEN is inclusive on both ends."""
+        post = sample_data["posts"][0]  # id=1
+        expr = Post.id.between(1, 1)
+        assert eval_expression(expr, post) is True
+
+
+# ---------------------------------------------------------------------------
+# String containment operators
+# ---------------------------------------------------------------------------
+
+
+class TestStringContainment:
+    """Tests for contains, startswith, endswith operators."""
+
+    def test_contains_match(self, session: Session, sample_data):
+        """Post.title.contains('Draft') matches 'Draft Post'."""
+        post = sample_data["posts"][1]
+        expr = Post.title.contains("Draft")
+        assert eval_expression(expr, post) is True
+
+    def test_contains_no_match(self, session: Session, sample_data):
+        """Post.title.contains('Missing') does not match."""
+        post = sample_data["posts"][0]
+        expr = Post.title.contains("Missing")
+        assert eval_expression(expr, post) is False
+
+    def test_startswith_match(self, session: Session, sample_data):
+        """Post.title.startswith('Public') matches 'Public Post'."""
+        post = sample_data["posts"][0]
+        expr = Post.title.startswith("Public")
+        assert eval_expression(expr, post) is True
+
+    def test_startswith_no_match(self, session: Session, sample_data):
+        """Post.title.startswith('Draft') does not match 'Published Post'."""
+        post = sample_data["posts"][0]
+        expr = Post.title.startswith("Draft")
+        assert eval_expression(expr, post) is False
+
+    def test_endswith_match(self, session: Session, sample_data):
+        """Post.title.endswith('Post') matches 'Draft Post'."""
+        post = sample_data["posts"][1]
+        expr = Post.title.endswith("Post")
+        assert eval_expression(expr, post) is True
+
+    def test_endswith_no_match(self, session: Session, sample_data):
+        """Post.title.endswith('Draft') does not match 'Draft Post'."""
+        post = sample_data["posts"][1]
+        expr = Post.title.endswith("Draft")
+        assert eval_expression(expr, post) is False

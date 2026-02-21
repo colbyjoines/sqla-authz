@@ -31,6 +31,12 @@ def explain_access(
     using a temporary in-memory SQLite database (same approach as
     :func:`~sqla_authz.can`), and reports which policies matched.
 
+    .. note::
+        This function creates a temporary SQLite engine per call.
+        It is designed for development and debugging, not production hot paths.
+        For production authorization checks, use :func:`~sqla_authz.can` or
+        :func:`~sqla_authz.authorize`.
+
     Args:
         actor: The user/principal performing the action.
         action: The action string (e.g., ``"read"``, ``"update"``).

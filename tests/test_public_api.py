@@ -35,6 +35,8 @@ class TestTopLevelExports:
         "WriteDeniedError",
         "explain_access",
         "explain_query",
+        "async_safe_get",
+        "async_safe_get_or_raise",
         "safe_get",
         "safe_get_or_raise",
     }
@@ -239,6 +241,8 @@ class TestSessionExports:
         "authorized_sessionmaker",
         "AuthorizationContext",
         "install_interceptor",
+        "async_safe_get",
+        "async_safe_get_or_raise",
         "safe_get",
         "safe_get_or_raise",
     }

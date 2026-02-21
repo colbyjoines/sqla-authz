@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 import operator
+import re
 from typing import Any
 
 from sqlalchemy import ColumnElement
@@ -47,6 +48,24 @@ _OPERATOR_MAP: dict[Any, Any] = {
     sa_operators.is_: operator.is_,
     sa_operators.is_not: operator.is_not,
 }
+
+
+def _sql_like_match(value: Any, pattern: Any, *, case_sensitive: bool = True) -> bool:
+    """Match a value against a SQL LIKE pattern in-memory.
+
+    Converts SQL wildcards (``%`` → ``.*``, ``_`` → ``.``) to a Python
+    regex and performs a full-string match.
+    """
+    if not isinstance(value, str) or not isinstance(pattern, str):
+        return False
+    # Replace SQL wildcards BEFORE escaping so they aren't escaped away.
+    # Use placeholders that won't collide with user text.
+    _ph_pct = "\x00PCT\x00"
+    _ph_usc = "\x00USC\x00"
+    temp = pattern.replace("%", _ph_pct).replace("_", _ph_usc)
+    regex = re.escape(temp).replace(_ph_pct, ".*").replace(_ph_usc, ".")
+    flags = 0 if case_sensitive else re.IGNORECASE
+    return re.fullmatch(regex, value, flags) is not None
 
 
 def eval_expression(
@@ -158,6 +177,62 @@ def _eval_binary(expr: BinaryExpression[Any], instance: DeclarativeBase) -> bool
         left_val = _resolve_value(expr.left, instance)
         not_in_vals: list[Any] = _resolve_in_right(expr.right, instance)
         return left_val not in not_in_vals
+
+    # --- LIKE / ILIKE operators ---
+    if op is sa_operators.like_op:
+        return _sql_like_match(
+            _resolve_value(expr.left, instance),
+            _resolve_value(expr.right, instance),
+            case_sensitive=True,
+        )
+    if op is sa_operators.ilike_op:
+        return _sql_like_match(
+            _resolve_value(expr.left, instance),
+            _resolve_value(expr.right, instance),
+            case_sensitive=False,
+        )
+    if op is sa_operators.not_like_op:
+        return not _sql_like_match(
+            _resolve_value(expr.left, instance),
+            _resolve_value(expr.right, instance),
+            case_sensitive=True,
+        )
+    if op is sa_operators.not_ilike_op:
+        return not _sql_like_match(
+            _resolve_value(expr.left, instance),
+            _resolve_value(expr.right, instance),
+            case_sensitive=False,
+        )
+
+    # --- BETWEEN operator ---
+    if op is sa_operators.between_op:
+        val = _resolve_value(expr.left, instance)
+        # SA wraps the two bounds in an ExpressionClauseList (not ClauseList),
+        # so extract them via the .clauses attribute.
+        right = expr.right
+        if hasattr(right, "clauses"):
+            bounds = [_resolve_value(c, instance) for c in right.clauses]
+        else:
+            bounds = _resolve_value(right, instance)
+        if isinstance(bounds, list) and len(bounds) == 2:
+            return bounds[0] <= val <= bounds[1]
+        return False
+
+    # --- String containment operators ---
+    if op is sa_operators.contains_op:
+        left_val = _resolve_value(expr.left, instance)
+        right_val = _resolve_value(expr.right, instance)
+        return isinstance(left_val, str) and isinstance(right_val, str) and right_val in left_val
+
+    if op is sa_operators.startswith_op:
+        left_val = _resolve_value(expr.left, instance)
+        right_val = _resolve_value(expr.right, instance)
+        return isinstance(left_val, str) and isinstance(right_val, str) and left_val.startswith(right_val)
+
+    if op is sa_operators.endswith_op:
+        left_val = _resolve_value(expr.left, instance)
+        right_val = _resolve_value(expr.right, instance)
+        return isinstance(left_val, str) and isinstance(right_val, str) and left_val.endswith(right_val)
 
     # --- Standard comparison operators (eq, ne, lt, le, gt, ge, is_, is_not) ---
     py_op = _OPERATOR_MAP.get(op)

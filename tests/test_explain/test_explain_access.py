@@ -19,7 +19,7 @@ class TestExplainAccess:
         registry.register(
             Post,
             "read",
-            lambda actor: Post.is_published == True,  # noqa: E712
+            lambda actor: Post.is_published == True,  # pyright: ignore[reportUnknownArgumentType] # type: ignore
             name="published_only",
             description="Allow reading published posts",
         )
