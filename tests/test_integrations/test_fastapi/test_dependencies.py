@@ -533,12 +533,16 @@ class TestDependencyInjection:
     def test_get_actor_raises_not_implemented(self) -> None:
         """get_actor sentinel raises NotImplementedError when not overridden."""
         mock_request = MagicMock(spec=Request)
+        # No app.state.sqla_authz_get_actor set
+        mock_request.app.state = MagicMock(spec=[])
         with pytest.raises(NotImplementedError, match="Override get_actor"):
             get_actor(mock_request)
 
     def test_get_session_raises_not_implemented(self) -> None:
         """get_session sentinel raises NotImplementedError when not overridden."""
         mock_request = MagicMock(spec=Request)
+        # No app.state.sqla_authz_get_session set
+        mock_request.app.state = MagicMock(spec=[])
         with pytest.raises(NotImplementedError, match="Override get_session"):
             get_session(mock_request)
 
@@ -548,6 +552,82 @@ class TestDependencyInjection:
 
         assert callable(get_actor)
         assert callable(get_session)
+
+    def test_dependency_overrides_work(self, seeded_session: Session) -> None:
+        """dependency_overrides[get_actor] and [get_session] work with AuthzDep."""
+        reg = PolicyRegistry()
+        reg.register(
+            Article,
+            "read",
+            lambda actor: Article.is_published == True,  # noqa: E712
+            name="read_published",
+            description="Read published",
+        )
+
+        app = FastAPI()
+
+        _actor = Actor(id=1, role="viewer")
+
+        # Use DI overrides — the documented pattern
+        app.dependency_overrides[get_actor] = lambda: _actor
+        app.dependency_overrides[get_session] = lambda: seeded_session
+
+        @app.get("/articles")
+        async def list_articles(
+            articles: list[Article] = AuthzDep(Article, "read", registry=reg),  # type: ignore[assignment]
+        ) -> list[dict]:
+            return [{"id": a.id, "title": a.title} for a in articles]
+
+        @app.get("/articles/{article_id}")
+        async def get_article(
+            article: Article = AuthzDep(  # type: ignore[assignment]
+                Article, "read", id_param="article_id", registry=reg
+            ),
+        ) -> dict:
+            return {"id": article.id, "title": article.title}
+
+        client = TestClient(app)
+
+        # Collection endpoint
+        response = client.get("/articles")
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 2  # only published
+        titles = {d["title"] for d in data}
+        assert "Published 1" in titles
+        assert "Draft" not in titles
+
+        # Single-item endpoint
+        response = client.get("/articles/1")
+        assert response.status_code == 200
+        assert response.json()["title"] == "Published 1"
+
+        # Denied item returns 404
+        response = client.get("/articles/2")
+        assert response.status_code == 404
+
+    def test_neither_configured_raises(self) -> None:
+        """When neither DI override nor configure_authz is used, NotImplementedError surfaces."""
+        reg = PolicyRegistry()
+        reg.register(
+            Article,
+            "read",
+            lambda actor: Article.is_published == True,  # noqa: E712
+            name="read_published",
+            description="Read published",
+        )
+
+        app = FastAPI()
+
+        @app.get("/articles")
+        async def list_articles(
+            articles: list[Article] = AuthzDep(Article, "read", registry=reg),  # type: ignore[assignment]
+        ) -> list[dict]:
+            return [{"id": a.id, "title": a.title} for a in articles]
+
+        client = TestClient(app, raise_server_exceptions=False)
+        response = client.get("/articles")
+        assert response.status_code == 500
 
 
 class TestConfigureAuthzDeprecation:

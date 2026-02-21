@@ -25,8 +25,9 @@ __all__ = ["AuthzDep", "configure_authz", "get_actor", "get_session"]
 def get_actor(request: Request) -> ActorLike:
     """Sentinel dependency — override via ``app.dependency_overrides[get_actor]``.
 
-    Raises ``NotImplementedError`` if not overridden, ensuring users
-    configure their actor provider before using ``AuthzDep``.
+    Falls back to the legacy ``app.state.sqla_authz_get_actor`` if set
+    by :func:`configure_authz`. Raises ``NotImplementedError`` if neither
+    DI override nor legacy configuration is present.
 
     Example::
 
@@ -34,6 +35,10 @@ def get_actor(request: Request) -> ActorLike:
 
         app.dependency_overrides[get_actor] = my_get_current_user
     """
+    # Legacy fallback: check app.state from configure_authz()
+    fn = getattr(request.app.state, "sqla_authz_get_actor", None)
+    if fn is not None:
+        return fn(request)  # pyright: ignore[reportUnknownVariableType,reportReturnType]
     raise NotImplementedError(
         "Override get_actor via app.dependency_overrides[get_actor]. "
         "See sqla-authz docs for configuration guide."
@@ -43,8 +48,9 @@ def get_actor(request: Request) -> ActorLike:
 def get_session(request: Request) -> Session:
     """Sentinel dependency — override via ``app.dependency_overrides[get_session]``.
 
-    Raises ``NotImplementedError`` if not overridden, ensuring users
-    configure their session provider before using ``AuthzDep``.
+    Falls back to the legacy ``app.state.sqla_authz_get_session`` if set
+    by :func:`configure_authz`. Raises ``NotImplementedError`` if neither
+    DI override nor legacy configuration is present.
 
     Example::
 
@@ -52,6 +58,10 @@ def get_session(request: Request) -> Session:
 
         app.dependency_overrides[get_session] = my_get_db_session
     """
+    # Legacy fallback: check app.state from configure_authz()
+    fn = getattr(request.app.state, "sqla_authz_get_session", None)
+    if fn is not None:
+        return fn(request)  # pyright: ignore[reportUnknownVariableType,reportReturnType]
     raise NotImplementedError(
         "Override get_session via app.dependency_overrides[get_session]. "
         "See sqla-authz docs for configuration guide."
@@ -135,15 +145,21 @@ def _make_dependency(
         pk_column: Model attribute name for the primary key column.
         registry: Optional per-dependency registry override.
     """
+    # Import module-level sentinels for Depends references
+    from sqla_authz.integrations.fastapi._dependencies import (
+        get_actor as _get_actor,
+        get_session as _get_session,
+    )
 
-    async def _resolve(request: Request) -> Any:
-        app_state = request.app.state
-        actor: ActorLike = app_state.sqla_authz_get_actor(request)
-        session: Session = app_state.sqla_authz_get_session(request)
-
+    async def _resolve(
+        request: Request,
+        actor: ActorLike = Depends(_get_actor),
+        session: Session = Depends(_get_session),
+    ) -> Any:
         effective_registry = registry
         if effective_registry is None:
-            effective_registry = getattr(app_state, "sqla_authz_registry", None)
+            # Legacy fallback: check app.state from configure_authz()
+            effective_registry = getattr(request.app.state, "sqla_authz_registry", None)
         if effective_registry is None:
             effective_registry = get_default_registry()
 
