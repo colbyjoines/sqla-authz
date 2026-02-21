@@ -83,6 +83,7 @@ dmypy.json
 .pyre/
 .pytype/
 .ruff_cache/
+.plans/
 
 # Cython debug symbols
 cython_debug/
