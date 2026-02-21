@@ -74,7 +74,7 @@ def _resolve_value(element: Any, instance: DeclarativeBase) -> Any:
     """Resolve an AST node to a Python value."""
     # Unwrap Grouping
     if isinstance(element, Grouping):
-        return _resolve_value(element.element, instance)
+        return _resolve_value(element.element, instance)  # pyright: ignore[reportUnknownMemberType,reportUnknownArgumentType]  # SA stubs
 
     # Null literal
     if isinstance(element, Null):
@@ -88,10 +88,10 @@ def _resolve_value(element: Any, instance: DeclarativeBase) -> Any:
 
     # BindParameter -- actor-bound values or literal values
     if isinstance(element, BindParameter):
-        val = element.effective_value
+        val: Any = element.effective_value  # pyright: ignore[reportUnknownMemberType,reportUnknownVariableType]  # SA stubs
         if val is None:
-            val = element.value
-        return val
+            val = element.value  # pyright: ignore[reportUnknownMemberType,reportUnknownVariableType]  # SA stubs
+        return val  # pyright: ignore[reportUnknownVariableType]  # SA stubs
 
     # Column reference -- read attribute from instance
     if hasattr(element, "key") and hasattr(element, "table"):
@@ -109,7 +109,7 @@ def _eval(expr: Any, instance: DeclarativeBase) -> bool:
     """Recursively evaluate an expression AST node."""
     # --- Unwrap Grouping ---
     if isinstance(expr, Grouping):
-        return _eval(expr.element, instance)
+        return _eval(expr.element, instance)  # pyright: ignore[reportUnknownMemberType,reportUnknownArgumentType]  # SA stubs
 
     # --- True / False literals ---
     if isinstance(expr, SATrue):
@@ -139,25 +139,25 @@ def _eval(expr: Any, instance: DeclarativeBase) -> bool:
 
     # --- BinaryExpression (comparisons, IN) ---
     if isinstance(expr, BinaryExpression):
-        return _eval_binary(expr, instance)
+        return _eval_binary(expr, instance)  # pyright: ignore[reportUnknownArgumentType]  # SA stubs
 
     raise UnsupportedExpressionError(f"Unsupported expression type: {type(expr).__name__}")
 
 
-def _eval_binary(expr: BinaryExpression, instance: DeclarativeBase) -> bool:
+def _eval_binary(expr: BinaryExpression[Any], instance: DeclarativeBase) -> bool:
     """Evaluate a BinaryExpression (=, !=, <, >, IN, IS, etc.)."""
     op = expr.operator
 
     # --- IN operator ---
     if op is sa_operators.in_op:
         left_val = _resolve_value(expr.left, instance)
-        right_vals = _resolve_in_right(expr.right, instance)
+        right_vals: list[Any] = _resolve_in_right(expr.right, instance)
         return left_val in right_vals
 
     if op is sa_operators.not_in_op:
         left_val = _resolve_value(expr.left, instance)
-        right_vals = _resolve_in_right(expr.right, instance)
-        return left_val not in right_vals
+        not_in_vals: list[Any] = _resolve_in_right(expr.right, instance)
+        return left_val not in not_in_vals
 
     # --- Standard comparison operators (eq, ne, lt, le, gt, ge, is_, is_not) ---
     py_op = _OPERATOR_MAP.get(op)
@@ -173,15 +173,15 @@ def _eval_binary(expr: BinaryExpression, instance: DeclarativeBase) -> bool:
     raise UnsupportedExpressionError(f"Unsupported binary operator: {op}")
 
 
-def _resolve_in_right(right: Any, instance: DeclarativeBase) -> list:
+def _resolve_in_right(right: Any, instance: DeclarativeBase) -> list[Any]:
     """Resolve the right-hand side of an IN expression to a list of values."""
     if isinstance(right, Grouping):
-        right = right.element
+        right = right.element  # pyright: ignore[reportUnknownMemberType,reportUnknownVariableType]  # SA stubs
     if isinstance(right, ClauseList):
         return [_resolve_value(c, instance) for c in right.clauses]
     val = _resolve_value(right, instance)
     if isinstance(val, list):
-        return val
+        return val  # pyright: ignore[reportUnknownVariableType]  # SA stubs
     return [val]
 
 
@@ -209,7 +209,7 @@ def _eval_exists(exists_expr: Exists, instance: DeclarativeBase) -> bool:
     for prop in mapper.relationships:
         rel_target_table = prop.mapper.local_table
 
-        if rel_target_table.name not in target_tables:
+        if rel_target_table.name not in target_tables:  # pyright: ignore[reportUnknownMemberType,reportAttributeAccessIssue]  # SA stubs
             continue
 
         rel_name = prop.key
@@ -254,11 +254,11 @@ def _get_from_tables(select_stmt: Any) -> set[str]:
     if hasattr(select_stmt, "get_final_froms"):
         for f in select_stmt.get_final_froms():
             if hasattr(f, "name"):
-                names.add(f.name)
+                names.add(f.name)  # pyright: ignore[reportUnknownMemberType,reportAttributeAccessIssue]  # SA stubs
     elif hasattr(select_stmt, "froms"):
         for f in select_stmt.froms:
             if hasattr(f, "name"):
-                names.add(f.name)
+                names.add(f.name)  # pyright: ignore[reportUnknownMemberType,reportAttributeAccessIssue]  # SA stubs
     return names
 
 
@@ -309,17 +309,19 @@ def _build_join_signatures(prop: Any) -> set[tuple[str, str]]:
 
 def _col_sig(col: Any) -> tuple[str, str] | None:
     """Get the (table_name, column_key) signature of a column element."""
-    unwrapped = col
+    unwrapped: Any = col
     if isinstance(unwrapped, Grouping):
-        unwrapped = unwrapped.element
+        unwrapped = unwrapped.element  # pyright: ignore[reportUnknownMemberType,reportUnknownVariableType]  # SA stubs
     if hasattr(unwrapped, "table") and hasattr(unwrapped, "key"):
-        tbl = unwrapped.table
+        tbl: Any = unwrapped.table
         if hasattr(tbl, "name"):
-            return (tbl.name, unwrapped.key)
+            tbl_name: str = tbl.name
+            col_key: str = unwrapped.key
+            return (tbl_name, col_key)
     return None
 
 
-def _is_join_binary(clause: BinaryExpression, join_sigs: set[tuple[str, str]]) -> bool:
+def _is_join_binary(clause: BinaryExpression[Any], join_sigs: set[tuple[str, str]]) -> bool:
     """Check if a BinaryExpression is a join condition based on column signatures."""
     left_sig = _col_sig(clause.left)
     right_sig = _col_sig(clause.right)
@@ -333,7 +335,7 @@ def _is_join_binary(clause: BinaryExpression, join_sigs: set[tuple[str, str]]) -
 def _strip_clauses(where: Any, join_sigs: set[tuple[str, str]]) -> Any | None:
     """Recursively strip join-condition clauses from an AND expression."""
     if isinstance(where, BooleanClauseList) and where.operator is sa_operators.and_:
-        remaining = []
+        remaining: list[Any] = []
         for clause in where.clauses:
             stripped = _strip_clauses(clause, join_sigs)
             if stripped is not None:
@@ -347,10 +349,10 @@ def _strip_clauses(where: Any, join_sigs: set[tuple[str, str]]) -> Any | None:
         return and_(*remaining)
 
     if isinstance(where, BinaryExpression):
-        if _is_join_binary(where, join_sigs):
+        if _is_join_binary(where, join_sigs):  # pyright: ignore[reportUnknownArgumentType]  # SA stubs
             return None
 
-    return where
+    return where  # pyright: ignore[reportUnknownVariableType]  # SA stubs
 
 
 def _handle_unloaded_relationship(model_name: str, rel_name: str) -> bool:

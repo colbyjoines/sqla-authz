@@ -165,9 +165,9 @@ def _make_dependency(
         if id_param is not None:
             if not result:
                 raise HTTPException(status_code=404, detail="Not found")
-            return result[0]
+            return result[0]  # pyright: ignore[reportUnknownVariableType]  # SA stubs
 
-        return list(result)
+        return list(result)  # pyright: ignore[reportUnknownArgumentType]  # SA stubs
 
     return _resolve
 

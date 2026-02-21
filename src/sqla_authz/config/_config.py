@@ -84,7 +84,7 @@ class AuthzConfig:
         # Apply strict_mode convenience defaults when individual settings
         # are left at their default "ignore" values.
         if self.strict_mode:
-            defaults_applied = {}
+            defaults_applied: dict[str, str | bool] = {}
             if self.on_unprotected_get == "ignore":
                 defaults_applied["on_unprotected_get"] = "warn"
             if self.on_text_query == "ignore":
