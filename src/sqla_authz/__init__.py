@@ -34,7 +34,12 @@ from sqla_authz.explain._access import explain_access
 from sqla_authz.explain._query import explain_query
 from sqla_authz.policy._decorator import policy
 from sqla_authz.policy._registry import PolicyRegistry
-from sqla_authz.session._safe_get import safe_get, safe_get_or_raise
+from sqla_authz.session._safe_get import (
+    async_safe_get,
+    async_safe_get_or_raise,
+    safe_get,
+    safe_get_or_raise,
+)
 
 try:
     __version__ = version("sqla-authz")
@@ -51,6 +56,8 @@ __all__ = [
     "NoPolicyError",
     "PolicyCompilationError",
     "PolicyRegistry",
+    "async_safe_get",
+    "async_safe_get_or_raise",
     "authorize",
     "authorize_query",
     "can",

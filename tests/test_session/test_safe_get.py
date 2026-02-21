@@ -3,12 +3,18 @@
 from __future__ import annotations
 
 import pytest
+import pytest_asyncio
 from sqlalchemy import create_engine, true
 from sqlalchemy.orm import Session, sessionmaker
 
 from sqla_authz.exceptions import AuthorizationDenied
 from sqla_authz.policy._registry import PolicyRegistry
-from sqla_authz.session._safe_get import safe_get, safe_get_or_raise
+from sqla_authz.session._safe_get import (
+    async_safe_get,
+    async_safe_get_or_raise,
+    safe_get,
+    safe_get_or_raise,
+)
 from tests.conftest import Base, MockActor, Organization, Post, User
 
 # ---------------------------------------------------------------------------
@@ -306,3 +312,140 @@ class TestSafeGetOrRaise:
                     registry=registry,
                 )
             assert exc_info.value.action == "delete"
+
+
+# ---------------------------------------------------------------------------
+# Tests: async_safe_get
+# ---------------------------------------------------------------------------
+
+
+class TestAsyncSafeGet:
+    """Test async_safe_get() — async variant of safe_get."""
+
+    @pytest.fixture()
+    def async_engine(self):
+        from sqlalchemy.ext.asyncio import create_async_engine
+
+        eng = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
+        return eng
+
+    @pytest_asyncio.fixture()
+    async def async_session(self, async_engine):
+        from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
+        async with async_engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+
+        factory = async_sessionmaker(async_engine, class_=AsyncSession)
+        async with factory() as sess:
+            org = Organization(id=1, name="Acme Corp")
+            sess.add(org)
+            alice = User(id=1, name="Alice", role="admin", org_id=1)
+            sess.add(alice)
+            post1 = Post(id=1, title="Public Post", is_published=True, author_id=1)
+            post2 = Post(id=2, title="Draft Post", is_published=False, author_id=1)
+            sess.add_all([post1, post2])
+            await sess.flush()
+            yield sess
+
+    @pytest.mark.asyncio
+    async def test_returns_authorized_entity(self, async_session, registry) -> None:
+        """async_safe_get returns entity when actor is authorized."""
+        actor = MockActor(id=1)
+        registry.register(
+            Post, "read",
+            lambda a: Post.is_published == True,
+            name="published_only", description="",
+        )
+        result = await async_safe_get(
+            async_session, Post, 1, actor=actor, registry=registry
+        )
+        assert result is not None
+        assert result.id == 1
+
+    @pytest.mark.asyncio
+    async def test_returns_none_when_denied(self, async_session, registry) -> None:
+        """async_safe_get returns None when actor is not authorized."""
+        actor = MockActor(id=1)
+        registry.register(
+            Post, "read",
+            lambda a: Post.is_published == True,
+            name="published_only", description="",
+        )
+        result = await async_safe_get(
+            async_session, Post, 2, actor=actor, registry=registry
+        )
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_returns_none_when_not_found(self, async_session, registry) -> None:
+        """async_safe_get returns None when entity does not exist."""
+        actor = MockActor(id=1)
+        registry.register(
+            Post, "read",
+            lambda a: true(),
+            name="allow_all", description="",
+        )
+        result = await async_safe_get(
+            async_session, Post, 999, actor=actor, registry=registry
+        )
+        assert result is None
+
+
+class TestAsyncSafeGetOrRaise:
+    """Test async_safe_get_or_raise() — async variant of safe_get_or_raise."""
+
+    @pytest.fixture()
+    def async_engine(self):
+        from sqlalchemy.ext.asyncio import create_async_engine
+
+        eng = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
+        return eng
+
+    @pytest_asyncio.fixture()
+    async def async_session(self, async_engine):
+        from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
+        async with async_engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+
+        factory = async_sessionmaker(async_engine, class_=AsyncSession)
+        async with factory() as sess:
+            org = Organization(id=1, name="Acme Corp")
+            sess.add(org)
+            alice = User(id=1, name="Alice", role="admin", org_id=1)
+            sess.add(alice)
+            post1 = Post(id=1, title="Public Post", is_published=True, author_id=1)
+            post2 = Post(id=2, title="Draft Post", is_published=False, author_id=1)
+            sess.add_all([post1, post2])
+            await sess.flush()
+            yield sess
+
+    @pytest.mark.asyncio
+    async def test_raises_when_denied(self, async_session, registry) -> None:
+        """async_safe_get_or_raise raises AuthorizationDenied when denied."""
+        actor = MockActor(id=1)
+        registry.register(
+            Post, "read",
+            lambda a: Post.is_published == True,
+            name="published_only", description="",
+        )
+        with pytest.raises(AuthorizationDenied) as exc_info:
+            await async_safe_get_or_raise(
+                async_session, Post, 2, actor=actor, registry=registry
+            )
+        assert exc_info.value.action == "read"
+
+    @pytest.mark.asyncio
+    async def test_returns_none_when_not_found(self, async_session, registry) -> None:
+        """async_safe_get_or_raise returns None when entity does not exist."""
+        actor = MockActor(id=1)
+        registry.register(
+            Post, "read",
+            lambda a: true(),
+            name="allow_all", description="",
+        )
+        result = await async_safe_get_or_raise(
+            async_session, Post, 999, actor=actor, registry=registry
+        )
+        assert result is None
