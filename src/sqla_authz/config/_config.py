@@ -12,7 +12,7 @@ from sqla_authz._types import (
     OnWriteDenied,
 )
 
-__all__ = ["AuthzConfig", "configure", "get_global_config", "_reset_global_config"]
+__all__ = ["AuthzConfig", "configure", "get_global_config", "_reset_global_config", "_set_global_config"]
 
 _VALID_POLICIES: set[str] = {"deny", "raise"}
 _VALID_UNLOADED_RELATIONSHIP: set[str] = {"deny", "raise", "warn"}
@@ -248,6 +248,12 @@ def configure(
         on_write_denied=on_write_denied,
     )
     return _global_config
+
+
+def _set_global_config(cfg: AuthzConfig) -> None:
+    """Replace global config with an exact snapshot. For testing only."""
+    global _global_config
+    _global_config = cfg
 
 
 def _reset_global_config() -> None:

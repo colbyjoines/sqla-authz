@@ -5,9 +5,12 @@ from __future__ import annotations
 import contextlib
 from collections.abc import Generator
 
-from sqla_authz.config._config import AuthzConfig, configure
+from sqla_authz.config._config import AuthzConfig
 from sqla_authz.config._config import (
     _reset_global_config as _reset_global_config,  # pyright: ignore[reportPrivateUsage]
+)
+from sqla_authz.config._config import (
+    _set_global_config as _set_global_config,  # pyright: ignore[reportPrivateUsage]
 )
 from sqla_authz.policy._registry import PolicyRegistry, get_default_registry
 
@@ -46,7 +49,7 @@ def isolated_authz(
     """
     from sqla_authz.config._config import get_global_config
 
-    # Save current state
+    # Save current state — exact snapshot
     saved_config = get_global_config()
     saved_registry = get_default_registry()
     saved_policies = dict(saved_registry._policies)  # pyright: ignore[reportPrivateUsage]
@@ -58,26 +61,17 @@ def isolated_authz(
         _reset_global_config()
         saved_registry.clear()
 
-        # Apply overrides if provided
+        # Apply overrides if provided — exact snapshot, not merge
         if config is not None:
-            configure(
-                on_missing_policy=config.on_missing_policy,
-                default_action=config.default_action,
-                log_policy_decisions=config.log_policy_decisions,
-            )
+            _set_global_config(config)
 
         effective_config = get_global_config()
         effective_registry = registry if registry is not None else saved_registry
 
         yield effective_config, effective_registry
     finally:
-        # Restore original state
-        _reset_global_config()
-        configure(
-            on_missing_policy=saved_config.on_missing_policy,
-            default_action=saved_config.default_action,
-            log_policy_decisions=saved_config.log_policy_decisions,
-        )
+        # Restore original state — exact snapshot, bypasses merge/post_init
+        _set_global_config(saved_config)
         saved_registry.clear()
         for key, regs in saved_policies.items():
             for reg in regs:

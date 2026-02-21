@@ -86,6 +86,115 @@ class TestIsolatedAuthzContextManager:
             assert isinstance(cfg, AuthzConfig)
             assert isinstance(reg, PolicyRegistry)
 
+    def test_restores_all_12_config_fields(self) -> None:
+        """All 12 config fields are restored exactly after exit."""
+        original = AuthzConfig(
+            on_missing_policy="raise",
+            default_action="update",
+            log_policy_decisions=True,
+            on_unloaded_relationship="raise",
+            strict_mode=True,
+            on_unprotected_get="raise",
+            on_text_query="raise",
+            on_skip_authz="warn",
+            audit_bypasses=True,
+            intercept_updates=True,
+            intercept_deletes=True,
+            on_write_denied="filter",
+        )
+        from sqla_authz.config._config import _set_global_config
+
+        _set_global_config(original)
+
+        with isolated_authz():
+            # Inside: should be defaults
+            inner = get_global_config()
+            assert inner.on_missing_policy == "deny"
+            assert inner.strict_mode is False
+
+        # After exit: all 12 fields restored exactly
+        restored = get_global_config()
+        assert restored.on_missing_policy == "raise"
+        assert restored.default_action == "update"
+        assert restored.log_policy_decisions is True
+        assert restored.on_unloaded_relationship == "raise"
+        assert restored.strict_mode is True
+        assert restored.on_unprotected_get == "raise"
+        assert restored.on_text_query == "raise"
+        assert restored.on_skip_authz == "warn"
+        assert restored.audit_bypasses is True
+        assert restored.intercept_updates is True
+        assert restored.intercept_deletes is True
+        assert restored.on_write_denied == "filter"
+
+    def test_strict_mode_with_custom_overrides_roundtrips(self) -> None:
+        """strict_mode=True + custom on_unprotected_get='raise' roundtrips correctly."""
+        original = AuthzConfig(
+            strict_mode=True,
+            on_unprotected_get="raise",
+        )
+        from sqla_authz.config._config import _set_global_config
+
+        _set_global_config(original)
+
+        with isolated_authz():
+            pass
+
+        restored = get_global_config()
+        # Must be "raise" (user's explicit value), not re-defaulted to "warn"
+        assert restored.on_unprotected_get == "raise"
+        assert restored.strict_mode is True
+
+    def test_restores_all_fields_on_exception(self) -> None:
+        """All 12 fields are restored even when the body raises."""
+        original = AuthzConfig(
+            on_missing_policy="raise",
+            default_action="delete",
+            log_policy_decisions=True,
+            on_unloaded_relationship="warn",
+            strict_mode=False,
+            on_unprotected_get="warn",
+            on_text_query="warn",
+            on_skip_authz="log",
+            audit_bypasses=True,
+            intercept_updates=True,
+            intercept_deletes=True,
+            on_write_denied="filter",
+        )
+        from sqla_authz.config._config import _set_global_config
+
+        _set_global_config(original)
+
+        with pytest.raises(RuntimeError):
+            with isolated_authz():
+                raise RuntimeError("boom")
+
+        restored = get_global_config()
+        assert restored.on_missing_policy == "raise"
+        assert restored.default_action == "delete"
+        assert restored.on_unloaded_relationship == "warn"
+        assert restored.on_unprotected_get == "warn"
+        assert restored.on_text_query == "warn"
+        assert restored.on_skip_authz == "log"
+        assert restored.audit_bypasses is True
+        assert restored.intercept_updates is True
+        assert restored.intercept_deletes is True
+        assert restored.on_write_denied == "filter"
+
+    def test_config_override_applies_all_fields(self) -> None:
+        """isolated_authz(config=...) applies all fields, not just 3."""
+        override = AuthzConfig(
+            on_missing_policy="raise",
+            strict_mode=True,
+            on_unprotected_get="raise",
+            intercept_updates=True,
+        )
+        with isolated_authz(config=override) as (cfg, _reg):
+            assert cfg.on_missing_policy == "raise"
+            assert cfg.strict_mode is True
+            assert cfg.on_unprotected_get == "raise"
+            assert cfg.intercept_updates is True
+
 
 class TestIsolatedAuthzStateFixture:
     """Tests for the isolated_authz_state pytest fixture."""
