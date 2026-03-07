@@ -24,6 +24,19 @@
     options:
       show_root_heading: true
 
+## Actions
+
+::: sqla_authz.actions
+    options:
+      show_root_heading: true
+      show_if_no_docstring: true
+      members:
+        - READ
+        - UPDATE
+        - DELETE
+        - CREATE
+        - action
+
 ## Types
 
 ::: sqla_authz.ActorLike
@@ -38,6 +51,11 @@
         - lookup
         - has_policy
         - registered_entities
+        - register_scope
+        - lookup_scopes
+        - has_scopes
+        - known_actions
+        - known_actions_for
         - clear
 
 ## Configuration
@@ -66,6 +84,20 @@
     options:
       show_root_heading: true
 
+## Scopes
+
+::: sqla_authz.scope
+    options:
+      show_root_heading: true
+
+::: sqla_authz.policy._scope.ScopeRegistration
+    options:
+      show_root_heading: true
+
+::: sqla_authz.verify_scopes
+    options:
+      show_root_heading: true
+
 ## Session
 
 ::: sqla_authz.session.authorized_sessionmaker
@@ -90,6 +122,9 @@
         - AuthorizationDenied
         - NoPolicyError
         - PolicyCompilationError
+        - UnknownActionError
+        - UnscopedModelError
+        - WriteDeniedError
 
 ## FastAPI Integration
 

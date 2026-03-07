@@ -65,6 +65,11 @@ def org_scoped_update(actor: User) -> ColumnElement[bool]:
     return false()
 ```
 
+!!! tip "Use Scopes for Tenant Isolation"
+    Instead of repeating `Document.org_id == actor.org_id` in every
+    policy, use a scope to apply it automatically.
+    See [Scopes](guide.md#scopes) for the full guide.
+
 ---
 
 ## Attribute-Based Access Control (ABAC)
@@ -149,6 +154,28 @@ def post_read(actor: User) -> ColumnElement[bool]: ...
 @policy(Post, "update", predicate=own_in_org)
 def post_update(actor: User) -> ColumnElement[bool]: ...
 ```
+
+---
+
+## Scope Patterns
+
+### Combining action-specific and universal scopes
+
+A tenant scope applies to all actions, while a soft-delete scope applies only to reads. On the same model, they compose as expected:
+
+```python
+from sqla_authz import scope, READ
+
+@scope(applies_to=[Post, Comment])
+def tenant(actor: User, Model: type) -> ColumnElement[bool]:
+    return Model.org_id == actor.org_id
+
+@scope(applies_to=[Post, Comment], actions=[READ])
+def soft_delete(actor: User, Model: type) -> ColumnElement[bool]:
+    return Model.deleted_at.is_(None)
+```
+
+For a `READ` query, both scopes apply -- rows must match the tenant AND not be soft-deleted. For a `DELETE` query, only the tenant scope applies -- you can delete soft-deleted rows in your own org.
 
 ---
 

@@ -17,6 +17,12 @@ def post_read(actor: User) -> ColumnElement[bool]:
 
 Policies must be **synchronous** and must not perform I/O. The returned expression is built in memory and compiled to SQL by SQLAlchemy.
 
+!!! tip "Action Constants"
+    Use `READ`, `UPDATE`, `DELETE`, `CREATE` from `sqla_authz` instead of
+    bare strings. They provide IDE autocomplete and prevent typos like
+    `"raed"` that silently return zero rows.
+    See [Action Safety](#action-safety) below.
+
 ### Python Control Flow
 
 Because policies are plain Python functions, you can branch on actor attributes to produce different SQL for different roles:
@@ -87,6 +93,52 @@ stmt = authorize_query(
 
 ---
 
+## Action Safety
+
+Action constants and validation catch typos before they cause silent data loss.
+
+```python
+from sqla_authz import READ, UPDATE, DELETE, CREATE
+
+@policy(Post, READ)
+def post_read(actor: User) -> ColumnElement[bool]:
+    return Post.is_published == True
+```
+
+### Custom Actions
+
+Use `action()` to create validated constants for domain-specific actions:
+
+```python
+from sqla_authz import action
+
+PUBLISH = action("publish")
+SOFT_DELETE = action("soft_delete")
+```
+
+Names must be lowercase alphabetic with optional underscores. Invalid names raise `ValueError` at definition time.
+
+### Unknown Action Detection
+
+Configure `on_unknown_action` to catch misspelled action strings at query time:
+
+| Environment | `on_unknown_action` | Why |
+|---|---|---|
+| Development | `"warn"` | Catch typos immediately |
+| CI / Tests | `"raise"` | Fail fast on misspelled actions |
+| Production | `"ignore"` (default) | No runtime overhead; rely on CI |
+
+```python
+configure(on_unknown_action="raise")
+
+authorize_query(select(Post), actor=user, action="raed")
+# UnknownActionError: Action 'raed' has no registered policies. Did you mean 'read'? Known actions: ['create', 'delete', 'read', 'update']
+```
+
+`strict_mode=True` sets `on_unknown_action="warn"` automatically.
+
+---
+
 ## Relationship Traversal
 
 Authorization rules often depend on related models — "show me posts by authors in my organization." Use SQLAlchemy's `has()` (many-to-one) and `any()` (one-to-many) to traverse relationships. These compile to SQL EXISTS subqueries:
@@ -128,6 +180,127 @@ return traverse_relationship_path(
 
 !!! tip "Performance"
     Index foreign key columns and filter columns used in EXISTS subqueries. For deep multi-hop chains on hot paths, consider denormalizing the join key onto the primary table.
+
+---
+
+## Scopes
+
+### The Multi-Tenant Problem
+
+```python
+@policy(Post, READ)
+def post_read(actor: User) -> ColumnElement[bool]:
+    return (Post.org_id == actor.org_id) & (Post.is_published == True)
+
+@policy(Comment, READ)
+def comment_read(actor: User) -> ColumnElement[bool]:
+    return Comment.org_id == actor.org_id  # easy to forget on new models
+```
+
+Every policy repeats `Model.org_id == actor.org_id`. If you add a new model and forget this filter, that model's data is visible across tenants.
+
+### Defining a Scope
+
+```python
+from sqla_authz import scope
+
+@scope(applies_to=[Post, Comment, Document])
+def tenant(actor: User, Model: type) -> ColumnElement[bool]:
+    return Model.org_id == actor.org_id
+```
+
+Now individual policies only express their own logic -- the tenant filter is automatic.
+
+Register scopes anywhere before query time -- typically in a `scopes.py` module imported at app startup. Scopes and policies can be registered in any order.
+
+### How Scopes Compose
+
+```
+final_filter = (policy_1 OR policy_2) AND scope_1 AND scope_2
+```
+
+- **Policies grant access** -- if any policy matches, the row is a candidate
+- **Scopes restrict access** -- all scopes must match for the row to be returned
+- **No policy = no access** -- scopes cannot override the deny-by-default rule. If no policy exists for a `(model, action)` pair, the result is `WHERE FALSE` regardless of scopes.
+
+Tenant + soft-delete scopes compose naturally:
+
+```python
+@scope(applies_to=[Post, Comment])
+def tenant(actor: User, Model: type) -> ColumnElement[bool]:
+    return Model.org_id == actor.org_id
+
+@scope(applies_to=[Post, Comment])
+def soft_delete(actor: User, Model: type) -> ColumnElement[bool]:
+    return Model.deleted_at.is_(None)
+```
+
+Generated SQL:
+
+```sql
+WHERE (is_published = true OR author_id = :id)
+  AND org_id = :org_id
+  AND deleted_at IS NULL
+```
+
+To bypass a scope for admin users, return `true()`:
+
+```python
+from sqlalchemy import true
+
+@scope(applies_to=[Post, Comment])
+def tenant(actor: User, Model: type) -> ColumnElement[bool]:
+    if actor.role == "admin":
+        return true()
+    return Model.org_id == actor.org_id
+```
+
+Returning `true()` bypasses the scope, but policies still apply. To grant unrestricted access, the policy must also return `true()` for admins.
+
+Scopes apply to all entry points -- `authorize_query()`, session interception, and `can()`/`authorize()` point checks. Scope expressions used with `can()` must use the supported operator subset. See [Limitations](limitations.md#scope-limitations).
+
+### Action-Specific Scopes
+
+Some scopes should only apply to certain actions. A soft-delete scope should hide deleted rows from reads but not prevent actual deletions:
+
+```python
+from sqla_authz import READ
+
+@scope(applies_to=[Post], actions=[READ])
+def soft_delete(actor: User, Model: type) -> ColumnElement[bool]:
+    return Model.deleted_at.is_(None)
+```
+
+Without `actions=[READ]`, this scope would also prevent `DELETE` operations on soft-deleted rows. When `actions` is omitted (or `None`), the scope applies to all actions.
+
+### Catching Missing Scopes
+
+```python
+from sqla_authz import verify_scopes
+
+# In your app startup (e.g., create_app(), FastAPI lifespan)
+verify_scopes(Base, field="org_id")
+```
+
+This checks every subclass of `Base`. If any has an `org_id` column but no registered scope, it raises immediately -- before the application serves requests.
+
+```python
+verify_scopes(Base, field="org_id")
+# UnscopedModelError: The following models have a 'org_id' column but no registered scope: Invoice, Notification
+```
+
+Custom predicate variant:
+
+```python
+verify_scopes(Base, when=lambda M: hasattr(M, "org_id"))
+```
+
+`field` and `when` are mutually exclusive. All model modules must be imported before calling `verify_scopes()`.
+
+!!! tip "Call at Startup or in CI"
+    Call `verify_scopes()` during application startup or in your test
+    suite -- never in the request path. It scans all model classes,
+    which is a one-time cost at boot.
 
 ---
 
@@ -211,6 +384,7 @@ configure(
 |-------|---------|-------------|
 | `on_missing_policy` | `"deny"` | No policy registered: `"deny"` appends `WHERE FALSE`; `"raise"` throws `NoPolicyError` |
 | `default_action` | `"read"` | Action used by session interception when none is specified |
+| `on_unknown_action` | `"ignore"` | Action not found in registry: `"ignore"` silent (backward compatible); `"warn"` logs with suggestions; `"raise"` throws `UnknownActionError` |
 | `log_policy_decisions` | `False` | Emit audit log entries on the `"sqla_authz"` logger |
 
 Use `"raise"` during development to catch models that don't have policies yet. Switch to `"deny"` in production for fail-closed behavior.

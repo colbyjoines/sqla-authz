@@ -80,7 +80,7 @@ flowchart LR
     I --> J
 ```
 
-Your policy function is called with the current actor and returns a SQLAlchemy filter expression. The compiler OR's multiple policies together, appends the result as a WHERE clause, and passes the statement to `session.execute()`. The same policies work with both `Session` and `AsyncSession`.
+Your policy function is called with the current actor and returns a SQLAlchemy filter expression. The compiler OR's multiple policies together, appends the result as a WHERE clause, and passes the statement to `session.execute()`. Scopes provide cross-cutting filters (like tenant isolation) that are automatically AND'd with all policies. The same policies work with both `Session` and `AsyncSession`.
 
 - No policy for a `(model, action)` pair → `WHERE FALSE` (deny by default)
 - No external server or sidecar — runs in-process
@@ -92,4 +92,5 @@ Your policy function is called with the current actor and returns a SQLAlchemy f
 - [Guide](guide.md) — Policies, relationships, point checks, session interception, configuration
 - [Integrations](integrations.md) — FastAPI
 - [Testing](testing.md) — Mock actors, assertion helpers, pytest fixtures
+- [Common Patterns](patterns.md) — RBAC, ABAC, scopes, composable predicates
 - [API Reference](reference/api.md) — All public functions, classes, and types
