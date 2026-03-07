@@ -8,6 +8,7 @@ from sqlalchemy import ColumnElement, false
 
 from sqla_authz._types import ActorLike
 from sqla_authz.config._config import get_global_config
+from sqla_authz.policy._base import PolicyRegistration
 from sqla_authz.policy._registry import PolicyRegistry
 
 __all__ = ["evaluate_policies"]
@@ -18,6 +19,8 @@ def evaluate_policies(
     resource_type: type,
     action: str,
     actor: ActorLike,
+    *,
+    policies: list[PolicyRegistration] | None = None,
 ) -> ColumnElement[bool]:
     """Evaluate all registered policies for (resource_type, action).
 
@@ -35,11 +38,14 @@ def evaluate_policies(
         resource_type: The SQLAlchemy model class.
         action: The action string.
         actor: The current actor/principal.
+        policies: Pre-fetched policy list. If ``None`` (default),
+            policies are looked up from *registry*.
 
     Returns:
         A ``ColumnElement[bool]`` suitable for ``Select.where()``.
     """
-    policies = registry.lookup(resource_type, action)
+    if policies is None:
+        policies = registry.lookup(resource_type, action)
 
     if not policies:
         config = get_global_config()

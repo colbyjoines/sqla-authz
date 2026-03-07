@@ -39,6 +39,10 @@ def can(
     Returns:
         ``True`` if access is granted, ``False`` if denied.
 
+    Raises:
+        QueryOnlyPolicyError: If any matching policy is marked
+            ``query_only=True``.
+
     Example::
 
         post = session.get(Post, 1)
@@ -53,15 +57,16 @@ def can(
 
     # Check for query-only policies before attempting in-memory evaluation
     policies = target_registry.lookup(resource_type, action)
-    query_only_names = [p.name for p in policies if p.query_only]
-    if query_only_names:
+    if any(p.query_only for p in policies):
         raise QueryOnlyPolicyError(
             resource_type=resource_type.__name__,
             action=action,
-            query_only_policies=query_only_names,
+            query_only_policies=[p.name for p in policies if p.query_only],
         )
 
-    filter_expr = evaluate_policies(target_registry, resource_type, action, actor)
+    filter_expr = evaluate_policies(
+        target_registry, resource_type, action, actor, policies=policies
+    )
 
     return eval_expression(filter_expr, resource)
 
@@ -90,6 +95,8 @@ def authorize(
 
     Raises:
         AuthorizationDenied: If the actor is not authorized.
+        QueryOnlyPolicyError: If any matching policy is marked
+            ``query_only=True``.
 
     Example::
 
