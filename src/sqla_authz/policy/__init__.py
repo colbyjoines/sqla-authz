@@ -4,14 +4,17 @@ from sqla_authz.policy._base import PolicyRegistration
 from sqla_authz.policy._decorator import policy
 from sqla_authz.policy._predicate import Predicate, always_allow, always_deny, predicate
 from sqla_authz.policy._registry import PolicyRegistry, get_default_registry
+from sqla_authz.policy._scope import ScopeRegistration, scope
 
 __all__ = [
     "Predicate",
     "PolicyRegistration",
     "PolicyRegistry",
+    "ScopeRegistration",
     "always_allow",
     "always_deny",
     "get_default_registry",
     "policy",
     "predicate",
+    "scope",
 ]

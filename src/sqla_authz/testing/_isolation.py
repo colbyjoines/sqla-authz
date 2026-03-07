@@ -55,6 +55,7 @@ def isolated_authz(
     saved_policies = dict(saved_registry._policies)  # pyright: ignore[reportPrivateUsage]
     # Deep-copy the lists so restore is exact
     saved_policies = {k: list(v) for k, v in saved_policies.items()}
+    saved_scopes = list(saved_registry._scopes)  # pyright: ignore[reportPrivateUsage]
 
     try:
         # Reset to clean state
@@ -76,3 +77,4 @@ def isolated_authz(
         for key, regs in saved_policies.items():
             for reg in regs:
                 saved_registry._policies.setdefault(key, []).append(reg)  # pyright: ignore[reportPrivateUsage]
+        saved_registry._scopes.extend(saved_scopes)  # pyright: ignore[reportPrivateUsage]

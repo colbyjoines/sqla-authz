@@ -5,10 +5,17 @@ from __future__ import annotations
 import inspect
 import threading
 from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from sqlalchemy import ColumnElement
 
 from sqla_authz.policy._base import PolicyRegistration
+
+if TYPE_CHECKING:
+    from sqla_authz.policy._scope import ScopeRegistration
+
+if TYPE_CHECKING:
+    from sqla_authz.policy._scope import ScopeRegistration
 
 __all__ = ["PolicyRegistry", "get_default_registry"]
 
@@ -51,6 +58,7 @@ class PolicyRegistry:
 
     def __init__(self) -> None:
         self._policies: dict[tuple[type, str], list[PolicyRegistration]] = {}
+        self._scopes: list[ScopeRegistration] = []
         self._lock = threading.Lock()
 
     def register(
@@ -182,8 +190,112 @@ class PolicyRegistry:
         with self._lock:
             return set(self._policies.keys())
 
+    def known_actions(self) -> set[str]:
+        """Return all action strings that have registered policies.
+
+        Thread-safe. Useful for introspection and validation.
+
+        Returns:
+            A set of action strings.
+
+        Example::
+
+            actions = registry.known_actions()
+            # e.g., {"read", "update", "delete"}
+        """
+        with self._lock:
+            return {action for _, action in self._policies.keys()}
+
+    def known_actions_for(self, resource_type: type) -> set[str]:
+        """Return all action strings registered for a specific model.
+
+        Args:
+            resource_type: The SQLAlchemy model class.
+
+        Returns:
+            A set of action strings registered for that model.
+
+        Example::
+
+            actions = registry.known_actions_for(Post)
+            # e.g., {"read", "update"}
+        """
+        with self._lock:
+            return {
+                act
+                for rt, act in self._policies.keys()
+                if rt is resource_type
+            }
+
+    def register_scope(self, scope_reg: ScopeRegistration) -> None:
+        """Register a cross-cutting scope filter.
+
+        Args:
+            scope_reg: A ``ScopeRegistration`` containing the scope
+                function, target models, and optional action restriction.
+
+        Example::
+
+            from sqla_authz.policy._scope import ScopeRegistration
+            reg = ScopeRegistration(
+                applies_to=(Post, Comment),
+                fn=my_scope_fn,
+                name="tenant",
+                description="Tenant isolation",
+                actions=None,
+            )
+            registry.register_scope(reg)
+        """
+        with self._lock:
+            self._scopes.append(scope_reg)
+
+    def lookup_scopes(
+        self, resource_type: type, action: str | None = None
+    ) -> list[ScopeRegistration]:
+        """Look up all scopes that apply to a model and optional action.
+
+        Args:
+            resource_type: The SQLAlchemy model class.
+            action: Optional action string to filter by. Scopes with
+                no ``actions`` restriction always match. Scopes with
+                an ``actions`` list only match if *action* is included.
+
+        Returns:
+            A list of matching ``ScopeRegistration`` objects.
+
+        Example::
+
+            scopes = registry.lookup_scopes(Post, "read")
+        """
+        with self._lock:
+            result: list[ScopeRegistration] = []
+            for s in self._scopes:
+                if resource_type not in s.applies_to:
+                    continue
+                if action is not None and s.actions is not None and action not in s.actions:
+                    continue
+                result.append(s)
+            return result
+
+    def has_scopes(self, resource_type: type) -> bool:
+        """Check whether at least one scope exists for a model.
+
+        Args:
+            resource_type: The SQLAlchemy model class.
+
+        Returns:
+            ``True`` if at least one scope covers this model.
+
+        Example::
+
+            if registry.has_scopes(Post):
+                print("Post has scope coverage")
+        """
+        with self._lock:
+            return any(resource_type in s.applies_to for s in self._scopes)
+
     def clear(self) -> None:
-        """Remove all registered policies.
+        """Remove all registered policies and scopes.
 
         Primarily useful in test teardown to reset the registry state
         between tests.
@@ -198,6 +310,7 @@ class PolicyRegistry:
         """
         with self._lock:
             self._policies.clear()
+            self._scopes.clear()
 
 
 # Module-level default registry (singleton).

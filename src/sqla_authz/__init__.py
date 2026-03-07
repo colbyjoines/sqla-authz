@@ -20,6 +20,8 @@ from importlib.metadata import PackageNotFoundError, version
 
 from sqla_authz._checks import authorize, can
 from sqla_authz._types import ActorLike
+from sqla_authz._verify import verify_scopes
+from sqla_authz.actions import CREATE, DELETE, READ, UPDATE, action
 from sqla_authz.compiler._query import authorize_query
 from sqla_authz.config._config import AuthzConfig, configure
 from sqla_authz.exceptions import (
@@ -28,12 +30,15 @@ from sqla_authz.exceptions import (
     AuthzError,
     NoPolicyError,
     PolicyCompilationError,
+    UnknownActionError,
+    UnscopedModelError,
     WriteDeniedError,
 )
 from sqla_authz.explain._access import explain_access
 from sqla_authz.explain._query import explain_query
 from sqla_authz.policy._decorator import policy
 from sqla_authz.policy._registry import PolicyRegistry
+from sqla_authz.policy._scope import scope
 from sqla_authz.session._safe_get import (
     async_safe_get,
     async_safe_get_or_raise,
@@ -48,14 +53,22 @@ except PackageNotFoundError:
 
 __all__ = [
     "__version__",
+    "action",
     "ActorLike",
     "AuthorizationDenied",
     "AuthzBypassError",
     "AuthzConfig",
     "AuthzError",
+    "CREATE",
+    "DELETE",
     "NoPolicyError",
     "PolicyCompilationError",
     "PolicyRegistry",
+    "READ",
+    "UPDATE",
+    "UnknownActionError",
+    "UnscopedModelError",
+    "WriteDeniedError",
     "async_safe_get",
     "async_safe_get_or_raise",
     "authorize",
@@ -67,5 +80,6 @@ __all__ = [
     "policy",
     "safe_get",
     "safe_get_or_raise",
-    "WriteDeniedError",
+    "scope",
+    "verify_scopes",
 ]
