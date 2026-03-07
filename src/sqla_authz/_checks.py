@@ -57,12 +57,11 @@ def can(
 
     # Check for query-only policies before attempting in-memory evaluation
     policies = target_registry.lookup(resource_type, action)
-    query_only_names = [p.name for p in policies if p.query_only]
-    if query_only_names:
+    if any(p.query_only for p in policies):
         raise QueryOnlyPolicyError(
             resource_type=resource_type.__name__,
             action=action,
-            query_only_policies=query_only_names,
+            query_only_policies=[p.name for p in policies if p.query_only],
         )
 
     filter_expr = evaluate_policies(
