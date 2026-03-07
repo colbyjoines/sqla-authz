@@ -89,10 +89,6 @@ plugins:
 nav:
   - Home: index.md
   - Getting Started: getting-started.md
-  - Guide: guide.md
-  - Common Patterns: patterns.md
-  - Integrations: integrations.md
-  - Testing: testing.md
   - Limitations: limitations.md
   - Reference:
     - reference/api.md

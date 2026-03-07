@@ -1,10 +1,6 @@
 # Limitations
 
-This page documents known limitations and boundaries of sqla-authz.
-
 ## Point checks vs. query-level authorization
-
-sqla-authz provides two authorization modes:
 
 | Feature | `authorize_query()` | `can()` / `authorize()` |
 |---------|---------------------|------------------------|
@@ -39,8 +35,6 @@ in `authorize_query()`:
 - Subqueries (non-relationship)
 - Database-specific operators (e.g., PostgreSQL array operators)
 
-Scopes work identically in both paths -- they return `ColumnElement[bool]` and go through the same `evaluate_policies()` function. However, scope expressions used with `can()`/`authorize()` must use the supported operator subset listed above.
-
 ### Marking policies as query-only
 
 If your policy uses SQL constructs not supported by the in-memory evaluator,
@@ -57,35 +51,6 @@ can(user, "read", post)  # raises QueryOnlyPolicyError with clear message
 
 Policies marked ``query_only=True`` work normally with ``authorize_query()``
 and ``explain_access()``. Only ``can()`` and ``authorize()`` are guarded.
-
-## `explain_access()` limitations
-
-- Creates a temporary SQLite engine per call. Designed for **development and
-  debugging only**, not production hot paths.
-- Uses SQLite semantics which may differ from your production database
-  (e.g., case sensitivity, collation).
-- Does not evaluate relationship-based policies (`.has()` / `.any()`).
-
-## Relationship policies
-
-When using `can()` / `authorize()` with policies that reference relationships
-(via `.has()` or `.any()`), the relationships **must be loaded** on the instance.
-Unloaded relationships are handled according to the `on_unloaded_relationship`
-config setting:
-
-- `"deny"` (default): Treat as non-match (access denied).
-- `"warn"`: Log a warning and deny.
-- `"raise"`: Raise `UnloadedRelationshipError`.
-
-Use `selectinload()` or `joinedload()` to eagerly load relationships before
-calling `can()`.
-
-## Scope limitations
-
-- Scopes are evaluated per-query, not cached. This is by design -- actor attributes may change between requests.
-- `verify_scopes()` only checks column presence (field-based) or custom predicate (when-based). It cannot detect if a scope's logic is correct.
-- `verify_scopes()` scans `DeclarativeBase.__subclasses__()` -- all mapped classes must be imported before calling it.
-- `explain_access()` and `explain_query()` include scope information in their output. You can also use `authorize_query()` with `.compile(compile_kwargs={"literal_binds": True})` to inspect the full SQL including scopes.
 
 ---
 

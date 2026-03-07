@@ -89,8 +89,5 @@ Your policy function is called with the current actor and returns a SQLAlchemy f
 ---
 
 - [Getting Started](getting-started.md) — Installation, first policy, core concepts
-- [Guide](guide.md) — Policies, relationships, point checks, session interception, configuration
-- [Integrations](integrations.md) — FastAPI
-- [Testing](testing.md) — Mock actors, assertion helpers, pytest fixtures
-- [Common Patterns](patterns.md) — RBAC, ABAC, scopes, composable predicates
+- [Limitations](limitations.md) — Known boundaries and project status
 - [API Reference](reference/api.md) — All public functions, classes, and types
