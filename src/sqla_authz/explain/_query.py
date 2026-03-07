@@ -94,6 +94,15 @@ def explain_query(
             )
 
         combined_expr = reduce(lambda a, b: a | b, filter_exprs)
+
+        # AND scopes (same as evaluate_policies)
+        scopes = target_registry.lookup_scopes(entity, action)
+        scope_names: list[str] = []
+        for scope_reg in scopes:
+            scope_expr = scope_reg.fn(actor, entity)
+            combined_expr = combined_expr & scope_expr
+            scope_names.append(scope_reg.name)
+
         combined_sql = _compile_sql(combined_expr)
         authorized_stmt = authorized_stmt.where(combined_expr)
 
@@ -106,6 +115,8 @@ def explain_query(
                 policies=policy_evals,
                 combined_filter_sql=combined_sql,
                 deny_by_default=False,
+                scopes_applied=len(scopes),
+                scope_names=scope_names,
             )
         )
 

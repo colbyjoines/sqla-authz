@@ -74,6 +74,7 @@ def evaluate_policies(
             actor=actor,
             policies=policies,
             result_expr=result,
+            scopes=scopes,
         )
 
     return result

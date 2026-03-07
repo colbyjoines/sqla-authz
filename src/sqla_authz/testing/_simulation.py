@@ -22,6 +22,7 @@ __all__ = [
     "PolicyDiff",
     "PolicyMatrix",
     "SimulationResult",
+    "assert_actions_covered",
     "assert_policy_sql_snapshot",
     "diff_policies",
     "policy_matrix",
@@ -136,6 +137,7 @@ class SimulationResult:
     actor_repr: str
     action: str
     policies_applied: dict[str, list[str]]
+    scopes_applied: dict[str, list[str]] = field(default_factory=dict)
 
     def __str__(self) -> str:
         lines = [f"Simulation(actor={self.actor_repr}, action={self.action!r})"]
@@ -143,6 +145,10 @@ class SimulationResult:
         lines.append(f"  Authorized: {self.authorized_sql}")
         for entity, policies in self.policies_applied.items():
             lines.append(f"  {entity}: {', '.join(policies)}")
+        if self.scopes_applied:
+            lines.append("  Scopes:")
+            for entity, scopes in self.scopes_applied.items():
+                lines.append(f"    {entity}: {', '.join(scopes)}")
         return "\n".join(lines)
 
 
@@ -182,8 +188,9 @@ def simulate_query(
     original_sql = str(stmt.compile(compile_kwargs=compile_kwargs))
     authorized_sql = str(authorized_stmt.compile(compile_kwargs=compile_kwargs))
 
-    # Extract which policies were applied per entity
+    # Extract which policies and scopes were applied per entity
     policies_applied: dict[str, list[str]] = {}
+    scopes_applied: dict[str, list[str]] = {}
     desc_list: list[dict[str, Any]] = stmt.column_descriptions
     for desc in desc_list:
         entity: type | None = desc.get("entity")
@@ -191,6 +198,9 @@ def simulate_query(
             continue
         policies = target_registry.lookup(entity, action)
         policies_applied[entity.__name__] = [p.name for p in policies]
+        scopes = target_registry.lookup_scopes(entity, action)
+        if scopes:
+            scopes_applied[entity.__name__] = [s.name for s in scopes]
 
     return SimulationResult(
         original_sql=original_sql,
@@ -198,6 +208,7 @@ def simulate_query(
         actor_repr=repr(actor),
         action=action,
         policies_applied=policies_applied,
+        scopes_applied=scopes_applied,
     )
 
 
@@ -337,4 +348,53 @@ def assert_policy_sql_snapshot(
     if actual != expected:
         raise AssertionError(
             f"Policy SQL snapshot mismatch:\n  Expected: {expected}\n  Actual:   {actual}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# assert_actions_covered — coverage assertion
+# ---------------------------------------------------------------------------
+
+
+def assert_actions_covered(
+    models: list[type],
+    actions: list[str],
+    *,
+    registry: PolicyRegistry | None = None,
+) -> None:
+    """Assert that every (model, action) pair has at least one policy.
+
+    Useful in test suites to catch missing policies early.
+
+    Args:
+        models: The model classes to check.
+        actions: The action strings to check.
+        registry: Optional custom registry. Defaults to global registry.
+
+    Raises:
+        AssertionError: If any (model, action) pair has no policy.
+
+    Example::
+
+        from sqla_authz.actions import READ, UPDATE, DELETE
+        from sqla_authz.testing import assert_actions_covered
+
+        def test_all_models_have_policies():
+            assert_actions_covered(
+                models=[Post, Comment, User],
+                actions=[READ, UPDATE, DELETE],
+            )
+    """
+    target_registry = registry if registry is not None else get_default_registry()
+    gaps: list[str] = []
+
+    for model in models:
+        for act in actions:
+            if not target_registry.has_policy(model, act):
+                gaps.append(f"({model.__name__}, {act!r})")
+
+    if gaps:
+        raise AssertionError(
+            f"Missing policies for {len(gaps)} (model, action) pair(s):\n"
+            + "\n".join(f"  - {g}" for g in gaps)
         )

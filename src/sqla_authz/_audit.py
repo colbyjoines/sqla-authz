@@ -4,11 +4,15 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
 from sqlalchemy import ColumnElement
 
 from sqla_authz._types import ActorLike
 from sqla_authz.policy._base import PolicyRegistration
+
+if TYPE_CHECKING:
+    from sqla_authz.policy._scope import ScopeRegistration
 
 __all__ = ["log_bypass_event", "log_policy_evaluation"]
 
@@ -22,12 +26,13 @@ def log_policy_evaluation(
     actor: ActorLike,
     policies: Sequence[PolicyRegistration],
     result_expr: ColumnElement[bool],
+    scopes: Sequence[ScopeRegistration] = (),
 ) -> None:
     """Log a policy evaluation decision.
 
     Logging levels:
     - INFO: Summary (entity, action, policy count)
-    - DEBUG: Detailed (which policies matched, filter expression)
+    - DEBUG: Detailed (which policies matched, filter expression, scopes)
     - WARNING: No policy found (deny-by-default triggered)
 
     Example::
@@ -70,6 +75,14 @@ def log_policy_evaluation(
             policy_names,
             result_expr,
         )
+        if scopes:
+            scope_names = [s.name for s in scopes]
+            logger.debug(
+                "Scopes applied for %s.%s: %s",
+                entity_name,
+                action,
+                scope_names,
+            )
 
 
 def log_bypass_event(
