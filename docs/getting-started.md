@@ -16,13 +16,7 @@ Requires Python 3.10+ and SQLAlchemy 2.0+. No external servers or sidecars.
     uv add sqla-authz
     ```
 
-Optional extras:
-
-| Extra | Use when |
-|---|---|
-| `sqla-authz[fastapi]` | Building FastAPI apps with `AuthzDep` |
-| `sqla-authz[testing]` | Writing tests with mock actors and assertion helpers |
-| `sqla-authz[all]` | All optional dependencies |
+Everything is included by default — FastAPI integration, testing utilities, and async support.
 
 ---
 
@@ -304,10 +298,6 @@ configure(
 
 ## FastAPI
 
-```bash
-pip install sqla-authz[fastapi]
-```
-
 ### Direct Pattern
 
 Call `authorize_query()` in each endpoint:
@@ -353,10 +343,6 @@ async def get_post(post: Post = AuthzDep(Post, "read", id_param="post_id")) -> d
 ---
 
 ## Testing
-
-```bash
-pip install sqla-authz[testing]
-```
 
 ### Mock Actors
 

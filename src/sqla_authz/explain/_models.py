@@ -91,7 +91,7 @@ class EntityExplanation:
     combined_filter_sql: str
     deny_by_default: bool
     scopes_applied: int = 0
-    scope_names: list[str] = field(default_factory=list)
+    scope_names: list[str] = field(default_factory=list)  # pyright: ignore[reportUnknownVariableType]
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-serializable dictionary."""
@@ -217,7 +217,7 @@ class AccessExplanation:
     allowed: bool
     deny_by_default: bool
     policies: list[AccessPolicyEvaluation]
-    scopes: list[AccessScopeEvaluation] = field(default_factory=list)
+    scopes: list[AccessScopeEvaluation] = field(default_factory=list)  # pyright: ignore[reportUnknownVariableType]
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-serializable dictionary."""

@@ -71,10 +71,10 @@ def _field_predicate(field: str) -> Callable[[type], bool]:
 
     def check(model: type) -> bool:
         try:
-            mapper = sa_inspect(model)
+            mapper = sa_inspect(model)  # type: ignore[type-var]
         except Exception:
             return False
-        return field in mapper.column_attrs
+        return field in mapper.column_attrs  # type: ignore[union-attr]
 
     return check
 

@@ -14,7 +14,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.12"
-      - run: uv sync --all-extras
+      - run: uv sync --dev
       - name: Ruff check
         run: uv run ruff check src/ tests/
       - name: Ruff format check
@@ -32,7 +32,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ matrix.python-version }}
-      - run: uv sync --all-extras
+      - run: uv sync --dev
       - name: Run tests
         run: uv run pytest -m "not integration and not benchmark" --cov=src/sqla_authz --cov-report=xml -q
       - name: Upload coverage
@@ -63,7 +63,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.12"
-      - run: uv sync --all-extras
+      - run: uv sync --dev
       - run: uv pip install psycopg2-binary
       - name: Run integration tests
         env:
@@ -78,7 +78,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.12"
-      - run: uv sync --all-extras
+      - run: uv sync --dev
       - name: Run benchmarks
         run: uv run pytest tests/benchmarks/ -v --benchmark-json=benchmark-results.json
       - uses: actions/upload-artifact@v4

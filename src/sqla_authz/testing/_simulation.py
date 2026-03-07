@@ -137,7 +137,7 @@ class SimulationResult:
     actor_repr: str
     action: str
     policies_applied: dict[str, list[str]]
-    scopes_applied: dict[str, list[str]] = field(default_factory=dict)
+    scopes_applied: dict[str, list[str]] = field(default_factory=dict)  # pyright: ignore[reportUnknownVariableType]
 
     def __str__(self) -> str:
         lines = [f"Simulation(actor={self.actor_repr}, action={self.action!r})"]

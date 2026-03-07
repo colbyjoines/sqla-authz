@@ -26,6 +26,11 @@ classifiers = [
 keywords = ["authorization", "sqlalchemy", "row-level-security", "rbac", "access-control"]
 dependencies = [
     "sqlalchemy>=2.0",
+    "fastapi>=0.100",
+    "httpx>=0.24",
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+    "aiosqlite>=0.19",
 ]
 
 [project.urls]
@@ -35,16 +40,8 @@ Repository = "https://github.com/colbyjoines/sqla-authz"
 Issues = "https://github.com/colbyjoines/sqla-authz/issues"
 Changelog = "https://github.com/colbyjoines/sqla-authz/blob/main/CHANGELOG.md"
 
-[project.optional-dependencies]
-testing = [
-    "pytest>=7.0",
-    "pytest-asyncio>=0.21",
-    "aiosqlite>=0.19",
-]
-fastapi = ["fastapi>=0.100", "httpx>=0.24"]
-all = ["sqla-authz[fastapi]"]
+[dependency-groups]
 dev = [
-    "sqla-authz[testing,fastapi]",
     "pyright>=1.1",
     "ruff>=0.1",
     "pytest-cov>=4.0",

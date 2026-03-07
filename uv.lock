@@ -1024,22 +1024,18 @@ name = "sqla-authz"
 version = "0.1.0b1"
 source = { editable = "." }
 dependencies = [
-    { name = "sqlalchemy" },
-]
-
-[package.optional-dependencies]
-all = [
-    { name = "fastapi" },
-    { name = "httpx" },
-]
-dev = [
     { name = "aiosqlite" },
     { name = "fastapi" },
     { name = "httpx" },
-    { name = "hypothesis" },
-    { name = "pyright" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
+    { name = "sqlalchemy" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "hypothesis" },
+    { name = "pyright" },
     { name = "pytest-benchmark" },
     { name = "pytest-cov" },
     { name = "ruff" },
@@ -1048,35 +1044,29 @@ docs = [
     { name = "mkdocstrings", extra = ["python"] },
     { name = "zensical" },
 ]
-fastapi = [
-    { name = "fastapi" },
-    { name = "httpx" },
-]
-testing = [
-    { name = "aiosqlite" },
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-]
 
 [package.metadata]
 requires-dist = [
-    { name = "aiosqlite", marker = "extra == 'testing'", specifier = ">=0.19" },
-    { name = "fastapi", marker = "extra == 'fastapi'", specifier = ">=0.100" },
-    { name = "httpx", marker = "extra == 'fastapi'", specifier = ">=0.24" },
-    { name = "hypothesis", marker = "extra == 'dev'", specifier = ">=6.0" },
-    { name = "mkdocstrings", extras = ["python"], marker = "extra == 'docs'", specifier = ">=0.24" },
-    { name = "pyright", marker = "extra == 'dev'", specifier = ">=1.1" },
-    { name = "pytest", marker = "extra == 'testing'", specifier = ">=7.0" },
-    { name = "pytest-asyncio", marker = "extra == 'testing'", specifier = ">=0.21" },
-    { name = "pytest-benchmark", marker = "extra == 'dev'", specifier = ">=4.0" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.0" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1" },
-    { name = "sqla-authz", extras = ["fastapi"], marker = "extra == 'all'" },
-    { name = "sqla-authz", extras = ["testing", "fastapi"], marker = "extra == 'dev'" },
+    { name = "aiosqlite", specifier = ">=0.19" },
+    { name = "fastapi", specifier = ">=0.100" },
+    { name = "httpx", specifier = ">=0.24" },
+    { name = "pytest", specifier = ">=7.0" },
+    { name = "pytest-asyncio", specifier = ">=0.21" },
     { name = "sqlalchemy", specifier = ">=2.0" },
-    { name = "zensical", marker = "extra == 'docs'", specifier = ">=0.0.20" },
 ]
-provides-extras = ["testing", "fastapi", "all", "dev", "docs"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "hypothesis", specifier = ">=6.0" },
+    { name = "pyright", specifier = ">=1.1" },
+    { name = "pytest-benchmark", specifier = ">=4.0" },
+    { name = "pytest-cov", specifier = ">=4.0" },
+    { name = "ruff", specifier = ">=0.1" },
+]
+docs = [
+    { name = "mkdocstrings", extras = ["python"], specifier = ">=0.24" },
+    { name = "zensical", specifier = ">=0.0.20" },
+]
 
 [[package]]
 name = "sqlalchemy"

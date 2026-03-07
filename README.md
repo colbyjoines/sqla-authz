@@ -140,26 +140,15 @@ Previously, [sqlalchemy-oso](https://github.com/osohq/oso) filled this niche but
 
 ### Installation
 
-1. Install the core library
+1. Install the library
    ```sh
    pip install sqla-authz
    ```
-2. Or install with optional extras
-   ```sh
-   # With FastAPI integration
-   pip install sqla-authz[fastapi]
-
-   # With test utilities
-   pip install sqla-authz[testing]
-
-   # Everything
-   pip install sqla-authz[all]
-   ```
-3. For development
+2. For development
    ```sh
    git clone https://github.com/colbyjoines/sqla-authz.git
    cd sqla-authz
-   uv pip install -e ".[dev]"
+   uv sync --dev
    ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
