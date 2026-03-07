@@ -9,6 +9,7 @@ from sqlalchemy import Delete, Select, Update, event
 from sqlalchemy.orm import ORMExecuteState, Session, sessionmaker, with_loader_criteria
 from sqlalchemy.sql.elements import TextClause
 
+from sqla_authz._action_validation import check_unknown_action
 from sqla_authz._types import ActorLike
 from sqla_authz.compiler._expression import evaluate_policies
 from sqla_authz.config._config import AuthzConfig, get_global_config
@@ -67,6 +68,8 @@ def _build_authz_handler(
 
         actor = actor_provider()
         action_val: str = orm_execute_state.execution_options.get("authz_action", action)
+
+        check_unknown_action(target_registry, action_val, config=target_config)
 
         stmt = cast("Select[Any]", orm_execute_state.statement)
         desc_list: list[dict[str, Any]] = stmt.column_descriptions
@@ -149,6 +152,8 @@ def _apply_write_authz(
         write_action: str = orm_execute_state.execution_options.get("authz_action", "update")
     else:
         write_action = orm_execute_state.execution_options.get("authz_action", "delete")
+
+    check_unknown_action(target_registry, write_action, config=target_config)
 
     # Extract entity from the statement's entity_description
     entity_desc: dict[str, Any] | None = getattr(stmt, "entity_description", None)

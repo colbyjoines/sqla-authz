@@ -6,6 +6,7 @@ from typing import Any
 
 from sqlalchemy import Select
 
+from sqla_authz._action_validation import check_unknown_action
 from sqla_authz._types import ActorLike
 from sqla_authz.compiler._expression import evaluate_policies
 from sqla_authz.policy._registry import PolicyRegistry, get_default_registry
@@ -43,6 +44,8 @@ def authorize_query(
         #      AND (is_published OR author_id = :id)
     """
     target_registry = registry if registry is not None else get_default_registry()
+
+    check_unknown_action(target_registry, action)
 
     desc_list: list[dict[str, Any]] = stmt.column_descriptions
     for desc in desc_list:

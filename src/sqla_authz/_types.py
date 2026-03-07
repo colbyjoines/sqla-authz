@@ -12,6 +12,7 @@ __all__ = [
     "OnBypassAction",
     "OnMissingPolicy",
     "OnSkipAuthz",
+    "OnUnknownAction",
     "OnUnloadedRelationship",
     "OnWriteDenied",
 ]
@@ -30,6 +31,9 @@ OnSkipAuthz = Literal["ignore", "warn", "log"]
 
 # Valid values for write authorization denial behavior.
 OnWriteDenied = Literal["raise", "filter"]
+
+# Valid values for AuthzConfig.on_unknown_action.
+OnUnknownAction = Literal["ignore", "warn", "raise"]
 
 
 @runtime_checkable

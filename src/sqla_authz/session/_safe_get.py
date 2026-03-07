@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, TypeVar
 
 from sqlalchemy.orm import DeclarativeBase, Session
 
+from sqla_authz._action_validation import check_unknown_action
 from sqla_authz._checks import can
 from sqla_authz._types import ActorLike
 from sqla_authz.exceptions import AuthorizationDenied
@@ -55,10 +56,11 @@ def safe_get(
         if post is None:
             raise HTTPException(404)
     """
+    target_registry = registry if registry is not None else get_default_registry()
+    check_unknown_action(target_registry, action)
     obj = session.get(entity_class, pk)
     if obj is None:
         return None
-    target_registry = registry if registry is not None else get_default_registry()
     if not can(actor, action, obj, registry=target_registry):
         return None
     return obj
@@ -101,10 +103,11 @@ def safe_get_or_raise(
         if post is None:
             raise HTTPException(404)
     """
+    target_registry = registry if registry is not None else get_default_registry()
+    check_unknown_action(target_registry, action)
     obj = session.get(entity_class, pk)
     if obj is None:
         return None
-    target_registry = registry if registry is not None else get_default_registry()
     if not can(actor, action, obj, registry=target_registry):
         raise AuthorizationDenied(
             actor=actor,
@@ -152,10 +155,11 @@ async def async_safe_get(
         if post is None:
             raise HTTPException(404)
     """
+    target_registry = registry if registry is not None else get_default_registry()
+    check_unknown_action(target_registry, action)
     obj = await session.get(entity_class, pk)
     if obj is None:
         return None
-    target_registry = registry if registry is not None else get_default_registry()
     if not can(actor, action, obj, registry=target_registry):
         return None
     return obj
@@ -199,10 +203,11 @@ async def async_safe_get_or_raise(
         if post is None:
             raise HTTPException(404)
     """
+    target_registry = registry if registry is not None else get_default_registry()
+    check_unknown_action(target_registry, action)
     obj = await session.get(entity_class, pk)
     if obj is None:
         return None
-    target_registry = registry if registry is not None else get_default_registry()
     if not can(actor, action, obj, registry=target_registry):
         raise AuthorizationDenied(
             actor=actor,
