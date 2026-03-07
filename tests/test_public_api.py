@@ -37,6 +37,7 @@ class TestTopLevelExports:
         "DELETE",
         "NoPolicyError",
         "PolicyCompilationError",
+        "QueryOnlyPolicyError",
         "READ",
         "UPDATE",
         "UnknownActionError",
@@ -163,9 +164,9 @@ class TestPolicyExports:
 
     def test_all_expected_symbols_importable(self) -> None:
         from sqla_authz.policy import (
-            Predicate,
             PolicyRegistration,
             PolicyRegistry,
+            Predicate,
             always_allow,
             always_deny,
             get_default_registry,

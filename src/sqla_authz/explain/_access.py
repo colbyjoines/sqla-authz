@@ -104,6 +104,7 @@ def explain_access(
                     description=p.description,
                     filter_sql=filter_sql,
                     matched=matched,
+                    query_only=p.query_only,
                 )
             )
 

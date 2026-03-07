@@ -70,6 +70,7 @@ class PolicyRegistry:
         name: str,
         description: str,
         validate_signature: bool = True,
+        query_only: bool = False,
     ) -> None:
         """Register a policy function for a (model, action) pair.
 
@@ -108,6 +109,7 @@ class PolicyRegistry:
             fn=fn,
             name=name,
             description=description,
+            query_only=query_only,
         )
         key = (resource_type, action)
         with self._lock:

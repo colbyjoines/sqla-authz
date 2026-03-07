@@ -23,6 +23,7 @@ def policy(
     *,
     predicate: Predicate | None = None,
     registry: PolicyRegistry | None = None,
+    query_only: bool = False,
 ) -> Callable[[F], F]:
     """Decorator that registers a policy function for (model, action).
 
@@ -38,6 +39,10 @@ def policy(
         action: The action string (e.g., "read", "update").
         predicate: Optional composable predicate to use as the policy function.
         registry: Optional custom registry. Defaults to the global registry.
+        query_only: If ``True``, this policy uses SQL constructs not supported
+            by the in-memory evaluator. ``can()`` and ``authorize()`` will raise
+            ``QueryOnlyPolicyError`` instead of attempting evaluation.
+            Defaults to ``False``.
 
     Returns:
         A decorator that registers the function and returns it unchanged.
@@ -54,6 +59,10 @@ def policy(
         @policy(Post, "update", predicate=is_author)
         def post_update(actor: User) -> ColumnElement[bool]:
             ...
+
+        @policy(Post, "read", query_only=True)
+        def complex_read(actor: User) -> ColumnElement[bool]:
+            return func.lower(Post.category) == "public"
     """
 
     def decorator(fn: F) -> F:
@@ -65,6 +74,7 @@ def policy(
             policy_fn,
             name=fn.__name__,
             description=fn.__doc__ or "",
+            query_only=query_only,
         )
         return fn
 

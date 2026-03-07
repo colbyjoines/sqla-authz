@@ -60,6 +60,10 @@
   background-clip: text;
 }
 
+.hero h1 .headerlink {
+  display: none;
+}
+
 [data-md-color-scheme="slate"] .hero h1 {
   background: linear-gradient(135deg, #a78bfa, #8b5cf6);
   -webkit-background-clip: text;

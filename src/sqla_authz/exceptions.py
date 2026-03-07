@@ -8,6 +8,7 @@ __all__ = [
     "AuthorizationDenied",
     "NoPolicyError",
     "PolicyCompilationError",
+    "QueryOnlyPolicyError",
     "UnknownActionError",
     "UnloadedRelationshipError",
     "UnscopedModelError",
@@ -165,6 +166,40 @@ class UnknownActionError(AuthzError):
             parts.append(f"Did you mean {suggestion!r}?")
         parts.append(f"Known actions: {known_actions}")
         super().__init__(" ".join(parts))
+
+
+class QueryOnlyPolicyError(AuthzError):
+    """Point check attempted on a query-only policy.
+
+    Raised when ``can()`` or ``authorize()`` is called and one or more
+    matching policies are marked ``query_only=True``.  These policies use
+    SQL constructs that cannot be evaluated in-memory.
+
+    Use ``authorize_query()`` instead, or remove the ``query_only`` flag
+    if the policy only uses supported operators.
+
+    Attributes:
+        resource_type: The model class name involved.
+        action: The action string.
+        query_only_policies: Names of the query-only policies.
+    """
+
+    def __init__(
+        self,
+        *,
+        resource_type: str,
+        action: str,
+        query_only_policies: list[str],
+    ) -> None:
+        self.resource_type = resource_type
+        self.action = action
+        self.query_only_policies = query_only_policies
+        names = ", ".join(query_only_policies)
+        super().__init__(
+            f"Cannot use can()/authorize() for ({resource_type}, {action!r}): "
+            f"the following policies are query-only: [{names}]. "
+            f"Use authorize_query() instead."
+        )
 
 
 class UnscopedModelError(AuthzError):

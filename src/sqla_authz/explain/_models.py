@@ -152,7 +152,10 @@ class AuthzExplanation:
                     lines.append(f"      - {p.name}: {p.description}")
                     lines.append(f"        SQL: {p.filter_sql}")
                 if entity.scopes_applied:
-                    lines.append(f"    Scopes ({entity.scopes_applied}): {', '.join(entity.scope_names)}")
+                    scope_names = ", ".join(entity.scope_names)
+                    lines.append(
+                        f"    Scopes ({entity.scopes_applied}): {scope_names}"
+                    )
                 lines.append(f"    Combined SQL: {entity.combined_filter_sql}")
             lines.append("")
         lines.append(f"  Authorized SQL: {self.authorized_sql}")
@@ -170,21 +173,26 @@ class AccessPolicyEvaluation:
         description: Human-readable description.
         filter_sql: Compiled SQL with literal binds.
         matched: Whether this policy matched the resource.
+        query_only: Whether this policy is marked as query-only.
     """
 
     name: str
     description: str
     filter_sql: str
     matched: bool
+    query_only: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-serializable dictionary."""
-        return {
+        result: dict[str, Any] = {
             "name": self.name,
             "description": self.description,
             "filter_sql": self.filter_sql,
             "matched": self.matched,
         }
+        if self.query_only:
+            result["query_only"] = True
+        return result
 
 
 @dataclass(frozen=True, slots=True)
@@ -239,7 +247,8 @@ class AccessExplanation:
             lines.append("  Policy Results:")
             for p in self.policies:
                 status = "MATCH" if p.matched else "NO MATCH"
-                lines.append(f"    - {p.name} [{status}]: {p.description}")
+                prefix = "[query-only] " if p.query_only else ""
+                lines.append(f"    - {prefix}{p.name} [{status}]: {p.description}")
                 lines.append(f"      SQL: {p.filter_sql}")
             if self.scopes:
                 lines.append("")

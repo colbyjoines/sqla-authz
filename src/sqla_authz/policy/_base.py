@@ -27,3 +27,4 @@ class PolicyRegistration:
     fn: Callable[..., ColumnElement[bool]]
     name: str
     description: str
+    query_only: bool = False

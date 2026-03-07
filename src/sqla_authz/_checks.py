@@ -8,7 +8,7 @@ from sqla_authz._action_validation import check_unknown_action
 from sqla_authz._types import ActorLike
 from sqla_authz.compiler._eval import eval_expression
 from sqla_authz.compiler._expression import evaluate_policies
-from sqla_authz.exceptions import AuthorizationDenied
+from sqla_authz.exceptions import AuthorizationDenied, QueryOnlyPolicyError
 from sqla_authz.policy._registry import PolicyRegistry, get_default_registry
 
 __all__ = ["can", "authorize"]
@@ -50,6 +50,16 @@ def can(
     check_unknown_action(target_registry, action)
 
     resource_type = type(resource)
+
+    # Check for query-only policies before attempting in-memory evaluation
+    policies = target_registry.lookup(resource_type, action)
+    query_only_names = [p.name for p in policies if p.query_only]
+    if query_only_names:
+        raise QueryOnlyPolicyError(
+            resource_type=resource_type.__name__,
+            action=action,
+            query_only_policies=query_only_names,
+        )
 
     filter_expr = evaluate_policies(target_registry, resource_type, action, actor)
 

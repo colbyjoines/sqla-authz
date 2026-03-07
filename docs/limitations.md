@@ -41,6 +41,23 @@ in `authorize_query()`:
 
 Scopes work identically in both paths -- they return `ColumnElement[bool]` and go through the same `evaluate_policies()` function. However, scope expressions used with `can()`/`authorize()` must use the supported operator subset listed above.
 
+### Marking policies as query-only
+
+If your policy uses SQL constructs not supported by the in-memory evaluator,
+mark it with ``query_only=True`` to get a clear error at ``can()`` / ``authorize()``
+call sites instead of an opaque ``UnsupportedExpressionError``:
+
+```python
+@policy(Post, "read", query_only=True)
+def complex_read(actor: User) -> ColumnElement[bool]:
+    return func.lower(Post.category) == "public"
+
+can(user, "read", post)  # raises QueryOnlyPolicyError with clear message
+```
+
+Policies marked ``query_only=True`` work normally with ``authorize_query()``
+and ``explain_access()``. Only ``can()`` and ``authorize()`` are guarded.
+
 ## `explain_access()` limitations
 
 - Creates a temporary SQLite engine per call. Designed for **development and
@@ -68,7 +85,7 @@ calling `can()`.
 - Scopes are evaluated per-query, not cached. This is by design -- actor attributes may change between requests.
 - `verify_scopes()` only checks column presence (field-based) or custom predicate (when-based). It cannot detect if a scope's logic is correct.
 - `verify_scopes()` scans `DeclarativeBase.__subclasses__()` -- all mapped classes must be imported before calling it.
-- `explain_access()` and `explain_query()` do not currently include scope information in their output. Use `authorize_query()` with `.compile(compile_kwargs={"literal_binds": True})` to inspect the full SQL including scopes.
+- `explain_access()` and `explain_query()` include scope information in their output. You can also use `authorize_query()` with `.compile(compile_kwargs={"literal_binds": True})` to inspect the full SQL including scopes.
 
 ---
 
