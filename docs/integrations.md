@@ -52,4 +52,8 @@ async def get_post(post: Post = AuthzDep(Post, "read", id_param="post_id")) -> d
 
 `install_error_handlers()` maps `AuthorizationDenied` to 403 and `NoPolicyError` to 500.
 
+You can also use action constants: `AuthzDep(Post, READ)` instead of bare strings.
+
+Scopes are automatically applied alongside policies through all entry points, including `AuthzDep`. See [Scopes](guide.md#scopes) for details.
+
 ---

@@ -39,6 +39,8 @@ in `authorize_query()`:
 - Subqueries (non-relationship)
 - Database-specific operators (e.g., PostgreSQL array operators)
 
+Scopes work identically in both paths -- they return `ColumnElement[bool]` and go through the same `evaluate_policies()` function. However, scope expressions used with `can()`/`authorize()` must use the supported operator subset listed above.
+
 ## `explain_access()` limitations
 
 - Creates a temporary SQLite engine per call. Designed for **development and
@@ -60,6 +62,15 @@ config setting:
 
 Use `selectinload()` or `joinedload()` to eagerly load relationships before
 calling `can()`.
+
+## Scope limitations
+
+- Scopes are evaluated per-query, not cached. This is by design -- actor attributes may change between requests.
+- `verify_scopes()` only checks column presence (field-based) or custom predicate (when-based). It cannot detect if a scope's logic is correct.
+- `verify_scopes()` scans `DeclarativeBase.__subclasses__()` -- all mapped classes must be imported before calling it.
+- `explain_access()` and `explain_query()` do not currently include scope information in their output. Use `authorize_query()` with `.compile(compile_kwargs={"literal_binds": True})` to inspect the full SQL including scopes.
+
+---
 
 ## Project status
 

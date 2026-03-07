@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from sqlalchemy.orm import DeclarativeBase, Session
 
+from sqla_authz._action_validation import check_unknown_action
 from sqla_authz._types import ActorLike
 from sqla_authz.compiler._eval import eval_expression
 from sqla_authz.compiler._expression import evaluate_policies
@@ -45,6 +46,9 @@ def can(
             return post
     """
     target_registry = registry if registry is not None else get_default_registry()
+
+    check_unknown_action(target_registry, action)
+
     resource_type = type(resource)
 
     filter_expr = evaluate_policies(target_registry, resource_type, action, actor)

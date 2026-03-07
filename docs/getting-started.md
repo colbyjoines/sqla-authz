@@ -65,10 +65,10 @@ A policy is a function decorated with `@policy(Model, "action")`. It receives th
 
 ```python
 from sqlalchemy import ColumnElement, or_, true
-from sqla_authz import policy
+from sqla_authz import policy, READ
 
 
-@policy(Post, "read")
+@policy(Post, READ)  # or @policy(Post, "read") -- bare strings still work
 def post_read_policy(actor: User) -> ColumnElement[bool]:
     # Admins see everything
     if actor.role == "admin":
@@ -88,10 +88,10 @@ Because policies are plain Python, you can use any control flow — `if`/`else`,
 
 ```python
 from sqlalchemy import select
-from sqla_authz import authorize_query
+from sqla_authz import authorize_query, READ
 
 stmt = select(Post).order_by(Post.id)
-stmt = authorize_query(stmt, actor=current_user, action="read")
+stmt = authorize_query(stmt, actor=current_user, action=READ)
 posts = session.execute(stmt).scalars().all()
 ```
 
@@ -132,6 +132,8 @@ def own_posts(actor: User) -> ColumnElement[bool]:
 
 This lets you compose rules from separate modules without coordination — each module registers its own policies, and they combine automatically.
 
+Action constants like `READ` and `UPDATE` prevent typo bugs that silently return zero rows. See [Action Safety](guide.md#action-safety) for details.
+
 ### Three Entry Points
 
 Pick the level of control that fits your application:
@@ -155,3 +157,17 @@ class User:
 ```
 
 Your policies reference `actor.whatever` — add whatever attributes your policies need. The library only requires `.id` for type safety; everything else is up to you.
+
+### Scopes
+
+In a multi-tenant app, every policy must include a tenant filter. Forgetting it on one model leaks data across tenants. Scopes are cross-cutting filters AND'd with all policies for matching models:
+
+```python
+from sqla_authz import scope
+
+@scope(applies_to=[Post, Comment, Document])
+def tenant(actor: User, Model: type) -> ColumnElement[bool]:
+    return Model.org_id == actor.org_id
+```
+
+See [Scopes](guide.md#scopes) for the full guide and [Scope Patterns](patterns.md#scope-patterns) for real-world examples.

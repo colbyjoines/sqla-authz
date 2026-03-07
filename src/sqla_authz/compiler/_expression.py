@@ -56,7 +56,13 @@ def evaluate_policies(
         return false()
 
     filters: list[ColumnElement[bool]] = [p.fn(actor) for p in policies]
-    result = reduce(lambda a, b: a | b, filters)
+    result: ColumnElement[bool] = reduce(lambda a, b: a | b, filters)
+
+    # AND all matching scopes (cross-cutting restrictions)
+    scopes = registry.lookup_scopes(resource_type, action)
+    for scope_reg in scopes:
+        scope_expr = scope_reg.fn(actor, resource_type)
+        result = result & scope_expr
 
     config = get_global_config()
     if config.log_policy_decisions:
@@ -68,6 +74,7 @@ def evaluate_policies(
             actor=actor,
             policies=policies,
             result_expr=result,
+            scopes=scopes,
         )
 
     return result

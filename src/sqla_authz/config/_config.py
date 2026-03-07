@@ -8,6 +8,7 @@ from sqla_authz._types import (
     OnBypassAction,
     OnMissingPolicy,
     OnSkipAuthz,
+    OnUnknownAction,
     OnUnloadedRelationship,
     OnWriteDenied,
 )
@@ -25,6 +26,7 @@ _VALID_UNLOADED_RELATIONSHIP: set[str] = {"deny", "raise", "warn"}
 _VALID_BYPASS_ACTIONS: set[str] = {"ignore", "warn", "raise"}
 _VALID_SKIP_AUTHZ: set[str] = {"ignore", "warn", "log"}
 _VALID_WRITE_DENIED: set[str] = {"raise", "filter"}
+_VALID_UNKNOWN_ACTION: set[str] = {"ignore", "warn", "raise"}
 
 
 @dataclass(frozen=True, slots=True)
@@ -55,6 +57,7 @@ class AuthzConfig:
     intercept_updates: bool = False
     intercept_deletes: bool = False
     on_write_denied: OnWriteDenied = "raise"
+    on_unknown_action: OnUnknownAction = "ignore"
 
     def __post_init__(self) -> None:
         if self.on_missing_policy not in _VALID_POLICIES:
@@ -87,6 +90,11 @@ class AuthzConfig:
                 f"on_write_denied must be one of {_VALID_WRITE_DENIED!r}, "
                 f"got {self.on_write_denied!r}"
             )
+        if self.on_unknown_action not in _VALID_UNKNOWN_ACTION:
+            raise ValueError(
+                f"on_unknown_action must be one of {_VALID_UNKNOWN_ACTION!r}, "
+                f"got {self.on_unknown_action!r}"
+            )
         # Apply strict_mode convenience defaults when individual settings
         # are left at their default "ignore" values.
         if self.strict_mode:
@@ -99,6 +107,8 @@ class AuthzConfig:
                 defaults_applied["on_skip_authz"] = "log"
             if not self.audit_bypasses:
                 defaults_applied["audit_bypasses"] = True
+            if self.on_unknown_action == "ignore":
+                defaults_applied["on_unknown_action"] = "warn"
             if defaults_applied:
                 # Use object.__setattr__ because the dataclass is frozen
                 for attr, val in defaults_applied.items():
@@ -119,6 +129,7 @@ class AuthzConfig:
         intercept_updates: bool | None = None,
         intercept_deletes: bool | None = None,
         on_write_denied: OnWriteDenied | None = None,
+        on_unknown_action: OnUnknownAction | None = None,
     ) -> AuthzConfig:
         """Return a new config with non-None overrides applied.
 
@@ -135,6 +146,7 @@ class AuthzConfig:
             intercept_updates: Override for intercept_updates (ignored if None).
             intercept_deletes: Override for intercept_deletes (ignored if None).
             on_write_denied: Override for on_write_denied (ignored if None).
+            on_unknown_action: Override for on_unknown_action (ignored if None).
 
         Returns:
             A new ``AuthzConfig`` with overrides merged.
@@ -176,6 +188,9 @@ class AuthzConfig:
             on_write_denied=(
                 on_write_denied if on_write_denied is not None else self.on_write_denied
             ),
+            on_unknown_action=(
+                on_unknown_action if on_unknown_action is not None else self.on_unknown_action
+            ),
         )
 
 
@@ -211,6 +226,7 @@ def configure(
     intercept_updates: bool | None = None,
     intercept_deletes: bool | None = None,
     on_write_denied: OnWriteDenied | None = None,
+    on_unknown_action: OnUnknownAction | None = None,
 ) -> AuthzConfig:
     """Update the global configuration by merging overrides.
 
@@ -229,6 +245,7 @@ def configure(
         intercept_updates: Enable interception of UPDATE statements.
         intercept_deletes: Enable interception of DELETE statements.
         on_write_denied: Set to ``"raise"`` or ``"filter"``.
+        on_unknown_action: Set to ``"ignore"``, ``"warn"``, or ``"raise"``.
 
     Returns:
         The updated global ``AuthzConfig``.
@@ -252,6 +269,7 @@ def configure(
         intercept_updates=intercept_updates,
         intercept_deletes=intercept_deletes,
         on_write_denied=on_write_denied,
+        on_unknown_action=on_unknown_action,
     )
     return _global_config
 

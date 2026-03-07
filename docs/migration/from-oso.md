@@ -208,6 +208,7 @@ For each `allow` rule in your `.polar` files, create a corresponding `@policy` f
 | `oso.authorize(actor, "update", post)` | `authorize(actor, "update", post)` |
 | `authorized_filter = oso.authorized_query(actor, "read", Post)` | `stmt = authorize_query(select(Post), actor=actor, action="read")` |
 | `oso.load_files(["policy.polar"])` | Import your policy module |
+| N/A (manual per-policy filters) | `@scope(applies_to=[...])` | Cross-cutting filters AND'd with all policies |
 
 ### 5. Remove Oso Dependencies
 
@@ -238,7 +239,16 @@ def test_viewer_reads_published_only(session, sample_data):
     assert_authorized(session, select(Post), viewer, "read", expected_count=2)
 ```
 
-### 7. Switch to Production Mode
+### 7. Add Scope Coverage
+
+Use `verify_scopes()` to catch models that need explicit scope coverage:
+
+```python
+from sqla_authz import verify_scopes
+verify_scopes(Base, field="org_id")  # raises if any org_id model lacks a scope
+```
+
+### 8. Switch to Production Mode
 
 Once all tests pass, optionally relax the missing policy behavior:
 
@@ -261,6 +271,7 @@ configure(on_missing_policy="deny")  # Deny-by-default (silent)
 | Built-in RBAC | `resource.has_role(actor)` | Manual role checks | Check `actor.role` in policy functions |
 | Policy debugging | `oso.query_rule_once()` | `explain_access()`, `simulate_query()` | Built-in explain and simulation tools |
 | Data filtering | `authorized_query()` | `authorize_query()` + session interceptor | Automatic via session interceptor; manual via `authorize_query()` |
+| Cross-cutting filters | Manual per-rule | `@scope()` + `verify_scopes()` | Scopes address cross-cutting patterns like tenant isolation |
 | Multi-language | Python, Ruby, Node.js, Go, Rust, Java | Python only | sqla-authz is Python + SQLAlchemy specific |
 
 ### What sqla-authz Does Better

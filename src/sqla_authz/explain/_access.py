@@ -7,7 +7,11 @@ from sqlalchemy import inspect as sa_inspect
 from sqlalchemy.orm import DeclarativeBase
 
 from sqla_authz._types import ActorLike
-from sqla_authz.explain._models import AccessExplanation, AccessPolicyEvaluation
+from sqla_authz.explain._models import (
+    AccessExplanation,
+    AccessPolicyEvaluation,
+    AccessScopeEvaluation,
+)
 from sqla_authz.policy._registry import PolicyRegistry, get_default_registry
 
 __all__ = ["explain_access"]
@@ -103,6 +107,27 @@ def explain_access(
                 )
             )
 
+        # Evaluate scopes
+        scope_evals: list[AccessScopeEvaluation] = []
+        all_scopes_match = True
+        scopes = target_registry.lookup_scopes(resource_type, action)
+        for scope_reg in scopes:
+            scope_expr = scope_reg.fn(actor, resource_type)
+            scope_filter_sql = _compile_sql(scope_expr)
+            check_stmt = select(literal_column("1")).select_from(table).where(scope_expr)  # type: ignore[union-attr]
+            row = conn.execute(check_stmt).first()  # type: ignore[arg-type]
+            scope_matched = row is not None
+            if not scope_matched:
+                all_scopes_match = False
+            scope_evals.append(
+                AccessScopeEvaluation(
+                    name=scope_reg.name,
+                    description=scope_reg.description,
+                    filter_sql=scope_filter_sql,
+                    matched=scope_matched,
+                )
+            )
+
         conn.rollback()
 
     engine.dispose()
@@ -112,7 +137,8 @@ def explain_access(
         action=action,
         resource_type=resource_type.__name__,
         resource_repr=repr(resource),
-        allowed=any_matched,
+        allowed=any_matched and all_scopes_match,
         deny_by_default=False,
         policies=policy_evals,
+        scopes=scope_evals,
     )

@@ -101,7 +101,11 @@ Thumbs.db
 
 # Misc archives
 docs_archive/
-
+.docs/
+.benchmarks/
+.hypothesis/
+.plans/
+.docs_archive/
 
 *-landing-page.png
 *-full-page.png

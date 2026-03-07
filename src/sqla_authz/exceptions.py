@@ -8,7 +8,9 @@ __all__ = [
     "AuthorizationDenied",
     "NoPolicyError",
     "PolicyCompilationError",
+    "UnknownActionError",
     "UnloadedRelationshipError",
+    "UnscopedModelError",
     "UnsupportedExpressionError",
     "WriteDeniedError",
 ]
@@ -125,6 +127,74 @@ class UnsupportedExpressionError(AuthzError):
     Raised when ``eval_expression`` encounters a SQLAlchemy AST node
     that it does not know how to evaluate.
     """
+
+
+class UnknownActionError(AuthzError):
+    """Action string has no registered policies for any model.
+
+    Raised when ``on_unknown_action="raise"`` and the action string
+    doesn't match any registered policy. This typically indicates a
+    typo in the action name.
+
+    Attributes:
+        action: The unrecognized action string.
+        known_actions: List of valid action strings.
+        suggestion: Closest matching action, if any.
+
+    Example::
+
+        configure(on_unknown_action="raise")
+        # authorize_query(..., action="raed") now raises:
+        # UnknownActionError: Action 'raed' has no registered policies.
+        #   Did you mean 'read'?
+        #   Known actions: ['create', 'delete', 'read', 'update']
+    """
+
+    def __init__(
+        self,
+        *,
+        action: str,
+        known_actions: list[str],
+        suggestion: str | None = None,
+    ) -> None:
+        self.action = action
+        self.known_actions = known_actions
+        self.suggestion = suggestion
+        parts = [f"Action {action!r} has no registered policies."]
+        if suggestion:
+            parts.append(f"Did you mean {suggestion!r}?")
+        parts.append(f"Known actions: {known_actions}")
+        super().__init__(" ".join(parts))
+
+
+class UnscopedModelError(AuthzError):
+    """One or more models lack required scope coverage.
+
+    Raised by ``verify_scopes()`` when models matching the check
+    criteria have no registered scopes.
+
+    Attributes:
+        models: The model classes that lack scope coverage.
+        field: The field name used for matching (if any).
+    """
+
+    def __init__(
+        self,
+        *,
+        models: list[type],
+        field: str | None = None,
+    ) -> None:
+        self.models = models
+        self.field = field
+        names = ", ".join(m.__name__ for m in models)
+        if field:
+            msg = (
+                f"The following models have a '{field}' column but no "
+                f"registered scope: {names}"
+            )
+        else:
+            msg = f"The following models have no registered scope: {names}"
+        super().__init__(msg)
 
 
 class WriteDeniedError(AuthzError):

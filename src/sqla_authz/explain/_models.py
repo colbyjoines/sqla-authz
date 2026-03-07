@@ -2,16 +2,43 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 __all__ = [
     "AccessExplanation",
     "AccessPolicyEvaluation",
+    "AccessScopeEvaluation",
     "AuthzExplanation",
     "EntityExplanation",
     "PolicyEvaluation",
 ]
+
+
+@dataclass(frozen=True, slots=True)
+class AccessScopeEvaluation:
+    """Result of evaluating a single scope against a specific resource instance.
+
+    Attributes:
+        name: Scope function name.
+        description: Human-readable description.
+        filter_sql: Compiled SQL with literal binds.
+        matched: Whether the scope filter matched the resource.
+    """
+
+    name: str
+    description: str
+    filter_sql: str
+    matched: bool
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return a JSON-serializable dictionary."""
+        return {
+            "name": self.name,
+            "description": self.description,
+            "filter_sql": self.filter_sql,
+            "matched": self.matched,
+        }
 
 
 @dataclass(frozen=True, slots=True)
@@ -52,6 +79,8 @@ class EntityExplanation:
         policies: Individual policy evaluations.
         combined_filter_sql: SQL for the combined (OR'd) filter.
         deny_by_default: True if no policies were found.
+        scopes_applied: Number of scopes applied.
+        scope_names: Names of scopes applied.
     """
 
     entity_name: str
@@ -61,6 +90,8 @@ class EntityExplanation:
     policies: list[PolicyEvaluation]
     combined_filter_sql: str
     deny_by_default: bool
+    scopes_applied: int = 0
+    scope_names: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-serializable dictionary."""
@@ -72,6 +103,8 @@ class EntityExplanation:
             "policies": [p.to_dict() for p in self.policies],
             "combined_filter_sql": self.combined_filter_sql,
             "deny_by_default": self.deny_by_default,
+            "scopes_applied": self.scopes_applied,
+            "scope_names": self.scope_names,
         }
 
 
@@ -118,6 +151,8 @@ class AuthzExplanation:
                 for p in entity.policies:
                     lines.append(f"      - {p.name}: {p.description}")
                     lines.append(f"        SQL: {p.filter_sql}")
+                if entity.scopes_applied:
+                    lines.append(f"    Scopes ({entity.scopes_applied}): {', '.join(entity.scope_names)}")
                 lines.append(f"    Combined SQL: {entity.combined_filter_sql}")
             lines.append("")
         lines.append(f"  Authorized SQL: {self.authorized_sql}")
@@ -164,6 +199,7 @@ class AccessExplanation:
         allowed: Whether access is allowed overall.
         deny_by_default: True if no policies were found.
         policies: Per-policy evaluation results.
+        scopes: Per-scope evaluation results.
     """
 
     actor_repr: str
@@ -173,6 +209,7 @@ class AccessExplanation:
     allowed: bool
     deny_by_default: bool
     policies: list[AccessPolicyEvaluation]
+    scopes: list[AccessScopeEvaluation] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-serializable dictionary."""
@@ -184,6 +221,7 @@ class AccessExplanation:
             "allowed": self.allowed,
             "deny_by_default": self.deny_by_default,
             "policies": [p.to_dict() for p in self.policies],
+            "scopes": [s.to_dict() for s in self.scopes],
         }
 
     def __str__(self) -> str:
@@ -203,4 +241,11 @@ class AccessExplanation:
                 status = "MATCH" if p.matched else "NO MATCH"
                 lines.append(f"    - {p.name} [{status}]: {p.description}")
                 lines.append(f"      SQL: {p.filter_sql}")
+            if self.scopes:
+                lines.append("")
+                lines.append("  Scope Results:")
+                for s in self.scopes:
+                    status = "MATCH" if s.matched else "NO MATCH"
+                    lines.append(f"    - {s.name} [{status}]: {s.description}")
+                    lines.append(f"      SQL: {s.filter_sql}")
         return "\n".join(lines)
