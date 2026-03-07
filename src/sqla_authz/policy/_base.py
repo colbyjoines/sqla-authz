@@ -20,6 +20,8 @@ class PolicyRegistration:
         fn: The policy function that takes an actor and returns a filter.
         name: The policy function name (for debugging/logging).
         description: Human-readable description (from docstring).
+        query_only: If True, this policy cannot be evaluated in-memory
+            by can()/authorize(). Defaults to False.
     """
 
     resource_type: type

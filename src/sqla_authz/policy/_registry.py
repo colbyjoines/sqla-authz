@@ -14,9 +14,6 @@ from sqla_authz.policy._base import PolicyRegistration
 if TYPE_CHECKING:
     from sqla_authz.policy._scope import ScopeRegistration
 
-if TYPE_CHECKING:
-    from sqla_authz.policy._scope import ScopeRegistration
-
 __all__ = ["PolicyRegistry", "get_default_registry"]
 
 
@@ -86,6 +83,10 @@ class PolicyRegistry:
             description: Description of the policy (typically the docstring).
             validate_signature: If ``True`` (default), validate that *fn*
                 accepts at least one positional parameter.
+            query_only: If ``True``, marks this policy as query-only.
+                ``can()`` and ``authorize()`` will raise
+                ``QueryOnlyPolicyError`` instead of attempting in-memory
+                evaluation. Defaults to ``False``.
 
         Returns:
             None

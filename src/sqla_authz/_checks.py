@@ -39,6 +39,10 @@ def can(
     Returns:
         ``True`` if access is granted, ``False`` if denied.
 
+    Raises:
+        QueryOnlyPolicyError: If any matching policy is marked
+            ``query_only=True``.
+
     Example::
 
         post = session.get(Post, 1)
@@ -61,7 +65,9 @@ def can(
             query_only_policies=query_only_names,
         )
 
-    filter_expr = evaluate_policies(target_registry, resource_type, action, actor)
+    filter_expr = evaluate_policies(
+        target_registry, resource_type, action, actor, policies=policies
+    )
 
     return eval_expression(filter_expr, resource)
 
@@ -90,6 +96,8 @@ def authorize(
 
     Raises:
         AuthorizationDenied: If the actor is not authorized.
+        QueryOnlyPolicyError: If any matching policy is marked
+            ``query_only=True``.
 
     Example::
 
