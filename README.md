@@ -101,16 +101,6 @@ Most authorization libraries answer a yes/no question: "can this user do this ac
 
 sqla-authz generates SQL WHERE clauses from your policies, so the database does the filtering. No post-query Python loops, no N+1 permission checks.
 
-| Feature | sqla-authz | PyCasbin | Cerbos | OpenFGA |
-|---------|-----------|----------|--------|---------|
-| Generates SQL WHERE clauses | Yes | No | Via server | No |
-| SQLAlchemy 2.0 + AsyncSession | Yes | N/A | No | N/A |
-| Runs in-process (no server) | Yes | Yes | No | No |
-| Policies are Python code | Yes | No (.conf) | No (YAML) | No |
-| Type-safe (Pyright strict) | Yes | No | No | No |
-
-Previously, [sqlalchemy-oso](https://github.com/osohq/oso) filled this niche but was deprecated in December 2023. sqla-authz is its spiritual successor with full SQLAlchemy 2.0 and AsyncSession support.
-
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
