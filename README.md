@@ -1,70 +1,25 @@
-<a id="readme-top"></a>
-
-
-
-<!-- PROJECT LOGO -->
-<br />
 <div align="center">
   <a href="https://github.com/colbyjoines/sqla-authz">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/brand/sqla-authz-logo-dark.png">
-      <source media="(prefers-color-scheme: light)" srcset="docs/assets/brand/sqla-authz-logo-light.png">
-      <img src="docs/assets/brand/sqla-authz-logo-light.png" alt="sqla-authz logo" width="360">
+      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/brand/sqla-authz-logo-dark.svg">
+      <source media="(prefers-color-scheme: light)" srcset="docs/assets/brand/sqla-authz-logo-light.svg">
+      <img src="docs/assets/brand/sqla-authz-logo-light.svg" alt="sqla-authz logo" width="360">
     </picture>
   </a>
-
-  <p align="center">
-    <br />
-    An intuitive API to write policies in pure Python.
-    <br />
+  <p>
+    An intuitive API to write policies in pure Python.<br />
     Embedded row-level authorization for SQLAlchemy 2.0.
-    <br />
-    <br />
-    <a href="https://colbyjoines.github.io/sqla-authz/"><strong>Explore the docs »</strong></a>
-    <br />
   </p>
+  <a href="https://colbyjoines.github.io/sqla-authz/"><strong>Explore the docs &raquo;</strong></a>
 </div>
 
+---
 
+## Why sqla-authz?
 
-<!-- TABLE OF CONTENTS -->
-<details>
-  <summary>Table of Contents</summary>
-  <ol>
-    <li>
-      <a href="#about-the-project">About The Project</a>
-      <ul>
-        <li><a href="#why-sqla-authz">Why sqla-authz?</a></li>
-      </ul>
-    </li>
-    <li><a href="#getting-started">Getting Started</a></li>
-    <li>
-      <a href="#usage">Usage</a>
-      <ul>
-        <li><a href="#define-a-policy">Define a Policy</a></li>
-        <li><a href="#apply-to-queries">Apply to Queries</a></li>
-        <li><a href="#scopes">Scopes</a></li>
-        <li><a href="#point-checks">Point Checks</a></li>
-        <li><a href="#automatic-session-interception">Automatic Session Interception</a></li>
-        <li><a href="#fastapi-integration">FastAPI Integration</a></li>
-      </ul>
-    </li>
-    <li><a href="#architecture">Architecture</a></li>
-    <li><a href="#references">References</a></li>
-    <li><a href="#acknowledgments">Acknowledgments</a></li>
-  </ol>
-</details>
+Most authorization libraries answer a yes/no question: *can this user do this action?* That works for protecting endpoints, but not when you need to **filter a query** — *show me only the rows this user is allowed to see.*
 
-
-
-<!-- ABOUT THE PROJECT -->
-## About The Project
-
-Your application queries data, but not every user should see every row. An author sees their drafts; readers only see published posts. A support agent sees their team's tickets, not the whole company's.
-
-You can scatter `.where()` conditions throughout your codebase, but authorization logic becomes fragile, inconsistent, and impossible to audit. **sqla-authz** lets you define these rules once as policies and applies them to every query — the database does the filtering, not Python.
-
-Key highlights:
+sqla-authz generates SQL WHERE clauses from your policies, so the database does the filtering. No post-query Python loops, no N+1 permission checks.
 
 * **SQL-native** — policies compile to `ColumnElement[bool]` WHERE clauses; the database does the filtering
 * **Pure Python** — no DSL, no config files; full IDE autocomplete, type checking, and debugging
@@ -72,39 +27,6 @@ Key highlights:
 * **Async-equal** — same synchronous policy code works with both `Session` and `AsyncSession`
 * **Type-safe** — passes Pyright strict mode with zero errors
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-### Why sqla-authz?
-
-Most authorization libraries answer a yes/no question: "can this user do this action?" That works for protecting endpoints, but not when you need to **filter a query** — "show me only the rows this user is allowed to see."
-
-sqla-authz generates SQL WHERE clauses from your policies, so the database does the filtering. No post-query Python loops, no N+1 permission checks.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
-<!-- GETTING STARTED -->
-## Getting Started
-
-### Installation
-
-1. Install the library
-   ```sh
-   pip install sqla-authz
-   ```
-2. For development
-   ```sh
-   git clone https://github.com/colbyjoines/sqla-authz.git
-   cd sqla-authz
-   uv sync --dev
-   ```
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
-<!-- USAGE EXAMPLES -->
 ## Usage
 
 ### Define a Policy
@@ -202,46 +124,37 @@ async def get_post(post: Post = AuthzDep(Post, "read", id_param="post_id")):
 
 _For more examples and advanced patterns, see the [Documentation](https://colbyjoines.github.io/sqla-authz/)._
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+## Getting Started
 
+```sh
+pip install sqla-authz
+```
 
+For development:
 
-<!-- ARCHITECTURE -->
+```sh
+git clone https://github.com/colbyjoines/sqla-authz.git
+cd sqla-authz
+uv sync --dev
+```
+
 ## Architecture
-
-**Key design decisions:**
 
 - **Explicit by default** — `authorize_query()` is visible and greppable. Automatic session interception is opt-in.
 - **SQL-native** — policies compile to `ColumnElement[bool]`. The database does the filtering, not Python.
 - **Async-equal** — same code for `Session` and `AsyncSession`. Filter construction is pure Python with no I/O.
 - **Fail-closed** — missing policy = zero rows, not a data leak.
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
-
-<!-- CONTACT -->
 ## References
 
-**Colby Joines** - [colby.j.joines@gmail.com](colby.j.joines@gmail.com)
+**Colby Joines** - [colby.j.joines@gmail.com](mailto:colby.j.joines@gmail.com)
 
 **Project Repo:** [https://github.com/colbyjoines/sqla-authz](https://github.com/colbyjoines/sqla-authz)
 
 **Project Docs:** [https://colbyjoines.github.io/sqla-authz/](https://colbyjoines.github.io/sqla-authz/)
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
-<!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
 
 * [Oso / sqlalchemy-oso](https://github.com/osohq/oso) — the original inspiration; deprecated Dec 2023
 * [SQLAlchemy](https://www.sqlalchemy.org/) — the foundation this library builds on
 * [Best-README-Template](https://github.com/othneildrew/Best-README-Template) — this README's structure
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
