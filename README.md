@@ -17,9 +17,9 @@
 <div align="center">
   <a href="https://github.com/colbyjoines/sqla-authz">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/brand/sqla-authz-logo-dark.svg">
-      <source media="(prefers-color-scheme: light)" srcset="docs/assets/brand/sqla-authz-logo-light.svg">
-      <img src="docs/assets/brand/sqla-authz-logo-light.svg" alt="sqla-authz logo" width="360">
+      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/brand/sqla-authz-logo-dark.png">
+      <source media="(prefers-color-scheme: light)" srcset="docs/assets/brand/sqla-authz-logo-light.png">
+      <img src="docs/assets/brand/sqla-authz-logo-light.png" alt="sqla-authz logo" width="360">
     </picture>
   </a>
 
