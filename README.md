@@ -27,17 +27,11 @@
     <br />
     Embedded row-level authorization for SQLAlchemy 2.0.
     <br />
-    Write policies as Python functions — they compile to SQL WHERE clauses at query time.
+    An intuitive API to write policies in pure Python.
     <br />
     <br />
     <a href="https://colbyjoines.github.io/sqla-authz/"><strong>Explore the docs »</strong></a>
     <br />
-    <br />
-    <a href="https://colbyjoines.github.io/sqla-authz/getting-started/">Getting Started</a>
-    &middot;
-    <a href="https://github.com/colbyjoines/sqla-authz/issues/new?labels=bug">Report Bug</a>
-    &middot;
-    <a href="https://github.com/colbyjoines/sqla-authz/issues/new?labels=enhancement">Request Feature</a>
   </p>
 </div>
 
@@ -119,24 +113,10 @@ Previously, [sqlalchemy-oso](https://github.com/osohq/oso) filled this niche but
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-### Built With
-
-* [![Python][Python-shield]][Python-url]
-* [![SQLAlchemy][SQLAlchemy-shield]][SQLAlchemy-url]
-* [![FastAPI][FastAPI-shield]][FastAPI-url]
-* [![Pytest][Pytest-shield]][Pytest-url]
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
 
 
 <!-- GETTING STARTED -->
 ## Getting Started
-
-### Prerequisites
-
-* Python 3.10+
-* SQLAlchemy 2.0+
 
 ### Installation
 
@@ -319,25 +299,6 @@ _For more examples and advanced patterns (predicates, relationship traversal, au
 <!-- ARCHITECTURE -->
 ## Architecture
 
-```mermaid
-graph TD
-    A["@policy(Post, 'read')<br/>Python function"] --> B[PolicyRegistry]
-    B --> C{Entry Point}
-    C -->|Explicit| D["authorize_query(stmt, actor, action)"]
-    C -->|Automatic| E["do_orm_execute event hook"]
-    C -->|FastAPI| F["AuthzDep(Post, 'read')"]
-    D --> G[Policy Compiler]
-    E --> G
-    F --> G
-    G --> H["ColumnElement[bool]<br/>SA filter expression"]
-    H --> I["stmt.where(filter)"]
-    I --> J["session.execute()<br/>(sync or async)"]
-
-    style A fill:#e1f5fe
-    style H fill:#c8e6c9
-    style J fill:#fff3e0
-```
-
 **Key design decisions:**
 
 - **Explicit by default** — `authorize_query()` is visible and greppable. Automatic session interception is opt-in.
@@ -349,19 +310,11 @@ graph TD
 
 
 
-<!-- LICENSE -->
-## License
-
-Distributed under the MIT License. See `LICENSE` for more information.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
 
 <!-- CONTACT -->
 ## Contact
 
-Colby Joines - cjoines@blueally.com
+Colby Joines - [colby.j.joines@gmail.com](colby.j.joines@gmail.com)
 
 Project Link: [https://github.com/colbyjoines/sqla-authz](https://github.com/colbyjoines/sqla-authz)
 
