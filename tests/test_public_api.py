@@ -506,7 +506,6 @@ class TestFastAPIExports:
 
     EXPECTED = {
         "AuthzDep",
-        "configure_authz",
         "get_actor",
         "get_session",
         "install_authz_interceptor",
@@ -516,7 +515,6 @@ class TestFastAPIExports:
     def test_all_expected_symbols_importable(self) -> None:
         from sqla_authz.integrations.fastapi import (
             AuthzDep,
-            configure_authz,
             get_actor,
             get_session,
             install_authz_interceptor,
@@ -525,7 +523,6 @@ class TestFastAPIExports:
 
         for sym in [
             AuthzDep,
-            configure_authz,
             get_actor,
             get_session,
             install_authz_interceptor,
@@ -536,11 +533,10 @@ class TestFastAPIExports:
     def test_callable_symbols(self) -> None:
         from sqla_authz.integrations.fastapi import (
             AuthzDep,
-            configure_authz,
             install_error_handlers,
         )
 
-        for sym in [AuthzDep, configure_authz, install_error_handlers]:
+        for sym in [AuthzDep, install_error_handlers]:
             assert callable(sym), f"{sym!r} should be callable"
 
     def test_all_is_complete(self) -> None:

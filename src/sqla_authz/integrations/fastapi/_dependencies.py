@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import warnings
 from collections.abc import Callable
 from typing import Any
 
@@ -14,7 +13,7 @@ from sqla_authz._types import ActorLike
 from sqla_authz.compiler._query import authorize_query
 from sqla_authz.policy._registry import PolicyRegistry, get_default_registry
 
-__all__ = ["AuthzDep", "configure_authz", "get_actor", "get_session"]
+__all__ = ["AuthzDep", "get_actor", "get_session"]
 
 
 # ---------------------------------------------------------------------------
@@ -25,9 +24,8 @@ __all__ = ["AuthzDep", "configure_authz", "get_actor", "get_session"]
 def get_actor(request: Request) -> ActorLike:
     """Sentinel dependency — override via ``app.dependency_overrides[get_actor]``.
 
-    Falls back to the legacy ``app.state.sqla_authz_get_actor`` if set
-    by :func:`configure_authz`. Raises ``NotImplementedError`` if neither
-    DI override nor legacy configuration is present.
+    Raises ``NotImplementedError`` when called directly. Override this
+    dependency in your FastAPI app to provide the current actor.
 
     Example::
 
@@ -35,10 +33,6 @@ def get_actor(request: Request) -> ActorLike:
 
         app.dependency_overrides[get_actor] = my_get_current_user
     """
-    # Legacy fallback: check app.state from configure_authz()
-    fn = getattr(request.app.state, "sqla_authz_get_actor", None)
-    if fn is not None:
-        return fn(request)  # pyright: ignore[reportUnknownVariableType,reportReturnType]
     raise NotImplementedError(
         "Override get_actor via app.dependency_overrides[get_actor]. "
         "See sqla-authz docs for configuration guide."
@@ -48,9 +42,8 @@ def get_actor(request: Request) -> ActorLike:
 def get_session(request: Request) -> Session:
     """Sentinel dependency — override via ``app.dependency_overrides[get_session]``.
 
-    Falls back to the legacy ``app.state.sqla_authz_get_session`` if set
-    by :func:`configure_authz`. Raises ``NotImplementedError`` if neither
-    DI override nor legacy configuration is present.
+    Raises ``NotImplementedError`` when called directly. Override this
+    dependency in your FastAPI app to provide the current SQLAlchemy session.
 
     Example::
 
@@ -58,10 +51,6 @@ def get_session(request: Request) -> Session:
 
         app.dependency_overrides[get_session] = my_get_db_session
     """
-    # Legacy fallback: check app.state from configure_authz()
-    fn = getattr(request.app.state, "sqla_authz_get_session", None)
-    if fn is not None:
-        return fn(request)  # pyright: ignore[reportUnknownVariableType,reportReturnType]
     raise NotImplementedError(
         "Override get_session via app.dependency_overrides[get_session]. "
         "See sqla-authz docs for configuration guide."
@@ -81,46 +70,6 @@ def _is_async_session(session: object) -> bool:
         return isinstance(session, AsyncSession)
     except ImportError:
         return False
-
-
-# ---------------------------------------------------------------------------
-# Legacy configuration (deprecated)
-# ---------------------------------------------------------------------------
-
-
-def configure_authz(
-    *,
-    app: Any,
-    get_actor: Callable[..., ActorLike],
-    get_session: Callable[..., Session],
-    registry: PolicyRegistry | None = None,
-) -> None:
-    """Configure global authorization providers for FastAPI integration.
-
-    .. deprecated::
-        Use ``app.dependency_overrides`` with the sentinel functions
-        instead. See the migration guide in the docs.
-
-    Stores the actor and session provider functions on the FastAPI app
-    state, making them available to ``AuthzDep`` dependencies.
-
-    Args:
-        app: The FastAPI application instance.
-        get_actor: A callable ``(request) -> ActorLike`` that resolves
-            the current actor from the request.
-        get_session: A callable ``(request) -> Session`` that resolves
-            the current SQLAlchemy session from the request.
-        registry: Optional policy registry. Defaults to the global registry.
-    """
-    warnings.warn(
-        "configure_authz() is deprecated. Use app.dependency_overrides instead. "
-        "See docs for migration guide.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    app.state.sqla_authz_get_actor = get_actor
-    app.state.sqla_authz_get_session = get_session
-    app.state.sqla_authz_registry = registry
 
 
 # ---------------------------------------------------------------------------
@@ -156,12 +105,7 @@ def _make_dependency(
         actor: ActorLike = Depends(_get_actor),
         session: Session = Depends(_get_session),
     ) -> Any:
-        effective_registry = registry
-        if effective_registry is None:
-            # Legacy fallback: check app.state from configure_authz()
-            effective_registry = getattr(request.app.state, "sqla_authz_registry", None)
-        if effective_registry is None:
-            effective_registry = get_default_registry()
+        effective_registry = registry if registry is not None else get_default_registry()
 
         stmt: Select[Any] = select(model)
 

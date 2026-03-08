@@ -320,13 +320,10 @@ async def list_posts(
 Inject authorized results directly into endpoints:
 
 ```python
-from sqla_authz.integrations.fastapi import AuthzDep, configure_authz, install_error_handlers
+from sqla_authz.integrations.fastapi import AuthzDep, get_actor, get_session, install_error_handlers
 
-configure_authz(
-    app=app,
-    get_actor=lambda request: request.state.user,
-    get_session=lambda request: request.state.session,
-)
+app.dependency_overrides[get_actor] = get_current_user
+app.dependency_overrides[get_session] = get_db_session
 install_error_handlers(app)
 
 @app.get("/posts")

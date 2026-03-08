@@ -132,7 +132,11 @@
     options:
       show_root_heading: true
 
-::: sqla_authz.integrations.fastapi.configure_authz
+::: sqla_authz.integrations.fastapi.get_actor
+    options:
+      show_root_heading: true
+
+::: sqla_authz.integrations.fastapi.get_session
     options:
       show_root_heading: true
 
