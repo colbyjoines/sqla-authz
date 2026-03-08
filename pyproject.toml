@@ -1,7 +1,7 @@
 [project]
 name = "sqla-authz"
 version = "0.1.0b3"
-description = "SQLAlchemy 2.0-native authorization library that converts declarative Python policies into SQL WHERE clauses."
+description = "Database-enforced authorization policies written in pure Python. For SQLAlchemy 2.0."
 readme = "README.md"
 authors = [{ name = "Colby Joines", email = "colby.j.joines@gmail.com" }]
 requires-python = ">=3.10"

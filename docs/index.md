@@ -11,7 +11,7 @@ hide:
 
 # sqla-authz
 
-Row-level authorization for SQLAlchemy 2.0. Policies are Python functions that compile to SQL WHERE clauses.
+Database-enforced authorization policies written in pure Python. For SQLAlchemy 2.0.
 
 <div class="hero-install" markdown>
 
@@ -31,7 +31,7 @@ pip install sqla-authz
 
 ## What it does
 
-You define who can see what as a Python function. sqla-authz compiles it into a SQL WHERE clause and appends it to your query:
+You define who can see what as a Python function. sqla-authz compiles it into a database-level filter and applies it to your query:
 
 ```python
 from sqla_authz import policy, authorize_query
@@ -80,7 +80,7 @@ flowchart LR
     I --> J
 ```
 
-Your policy function is called with the current actor and returns a SQLAlchemy filter expression. The compiler OR's multiple policies together, appends the result as a WHERE clause, and passes the statement to `session.execute()`. Scopes provide cross-cutting filters (like tenant isolation) that are automatically AND'd with all policies. The same policies work with both `Session` and `AsyncSession`.
+Your policy function is called with the current actor and returns a SQLAlchemy filter expression. The compiler OR's multiple policies together, applies the result to the query, and passes the statement to `session.execute()`. Scopes provide cross-cutting filters (like tenant isolation) that are automatically AND'd with all policies. The same policies work with both `Session` and `AsyncSession`.
 
 - No policy for a `(model, action)` pair → `WHERE FALSE` (deny by default)
 - No external server or sidecar — runs in-process

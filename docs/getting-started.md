@@ -62,7 +62,7 @@ from sqlalchemy import ColumnElement, or_, true
 from sqla_authz import policy, READ
 
 
-@policy(Post, READ)  # or @policy(Post, "read") -- bare strings still work
+@policy(Post, READ)
 def post_read_policy(actor: User) -> ColumnElement[bool]:
     # Admins see everything
     if actor.role == "admin":
@@ -74,7 +74,7 @@ def post_read_policy(actor: User) -> ColumnElement[bool]:
     )
 ```
 
-The policy is registered globally at import time. At query time, it's called with the current actor, and the returned expression becomes a WHERE clause.
+The policy is registered globally at import time. At query time, it's called with the current actor, and the returned expression becomes a database-level filter.
 
 Because policies are plain Python, you can use any control flow — `if`/`else`, early returns, helper functions. Role checks happen in Python; row-level conditions become SQL.
 

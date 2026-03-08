@@ -1,6 +1,6 @@
-"""sqla-authz — Embedded SQLAlchemy 2.0-native authorization library.
+"""sqla-authz — Database-enforced authorization policies written in pure Python.
 
-Converts declarative Python policies into SQL WHERE clauses.
+For SQLAlchemy 2.0.
 No external servers, no network round-trips.
 
 Example::
