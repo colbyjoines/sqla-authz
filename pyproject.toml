@@ -1,6 +1,6 @@
 [project]
 name = "sqla-authz"
-version = "0.1.0b2"
+version = "0.1.0b3"
 description = "SQLAlchemy 2.0-native authorization library that converts declarative Python policies into SQL WHERE clauses."
 readme = "README.md"
 authors = [{ name = "Colby Joines", email = "colby.j.joines@gmail.com" }]
@@ -24,8 +24,12 @@ classifiers = [
 keywords = [
     "authorization",
     "sqlalchemy",
-    "row-level-security",
+    "policy-based-access-control",
+    "policy-engine",
+    "policy-evaluation",
     "rbac",
+    "abac",
+    "fastapi",
     "access-control",
 ]
 dependencies = [
