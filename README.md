@@ -25,9 +25,9 @@
 
   <p align="center">
     <br />
-    Embedded row-level authorization for SQLAlchemy 2.0.
-    <br />
     An intuitive API to write policies in pure Python.
+    <br />
+    Embedded row-level authorization for SQLAlchemy 2.0.
     <br />
     <br />
     <a href="https://colbyjoines.github.io/sqla-authz/"><strong>Explore the docs »</strong></a>
@@ -312,11 +312,13 @@ _For more examples and advanced patterns (predicates, relationship traversal, au
 
 
 <!-- CONTACT -->
-## Contact
+## References
 
-Colby Joines - [colby.j.joines@gmail.com](colby.j.joines@gmail.com)
+**Colby Joines** - [colby.j.joines@gmail.com](colby.j.joines@gmail.com)
 
-Project Link: [https://github.com/colbyjoines/sqla-authz](https://github.com/colbyjoines/sqla-authz)
+**Project Repo:** [https://github.com/colbyjoines/sqla-authz](https://github.com/colbyjoines/sqla-authz)
+
+**Project Docs:** [https://colbyjoines.github.io/sqla-authz/](https://colbyjoines.github.io/sqla-authz/)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
