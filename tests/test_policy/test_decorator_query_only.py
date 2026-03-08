@@ -42,8 +42,7 @@ class TestPolicyDecoratorQueryOnly:
         registry = PolicyRegistry()
 
         @policy(Post, "read", registry=registry, predicate=pred, query_only=True)
-        def predicated_read(actor: MockActor) -> ColumnElement[bool]:
-            ...
+        def predicated_read(actor: MockActor) -> ColumnElement[bool]: ...
 
         reg = registry.lookup(Post, "read")[0]
         assert reg.query_only is True

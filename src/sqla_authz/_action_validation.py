@@ -71,9 +71,7 @@ def _suggest_action(action: str, known: set[str]) -> str | None:
     return matches[0] if matches else None
 
 
-def _format_message(
-    action: str, known: list[str], suggestion: str | None
-) -> str:
+def _format_message(action: str, known: list[str], suggestion: str | None) -> str:
     parts = [f"Action {action!r} has no registered policies."]
     if suggestion:
         parts.append(f"Did you mean {suggestion!r}?")

@@ -13,7 +13,6 @@ from sqla_authz.policy._registry import PolicyRegistry
 from sqla_authz.policy._scope import ScopeRegistration
 from tests.conftest import MockActor
 
-
 # ---------------------------------------------------------------------------
 # Test-local model
 # ---------------------------------------------------------------------------
@@ -49,13 +48,15 @@ class TestAuditScopeLogging:
             name="allow_all",
             description="",
         )
-        registry.register_scope(ScopeRegistration(
-            applies_to=(AuditScopedPost,),
-            fn=lambda actor, Model: Model.org_id == actor.org_id,
-            name="tenant_scope",
-            description="",
-            actions=None,
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(AuditScopedPost,),
+                fn=lambda actor, Model: Model.org_id == actor.org_id,
+                name="tenant_scope",
+                description="",
+                actions=None,
+            )
+        )
 
         actor = MockActor(id=1, org_id=42)
         with caplog.at_level(logging.DEBUG, logger="sqla_authz"):
@@ -97,20 +98,24 @@ class TestAuditScopeLogging:
             name="allow_all",
             description="",
         )
-        registry.register_scope(ScopeRegistration(
-            applies_to=(AuditScopedPost,),
-            fn=lambda actor, Model: Model.org_id == actor.org_id,
-            name="tenant",
-            description="",
-            actions=None,
-        ))
-        registry.register_scope(ScopeRegistration(
-            applies_to=(AuditScopedPost,),
-            fn=lambda actor, Model: true(),
-            name="region",
-            description="",
-            actions=None,
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(AuditScopedPost,),
+                fn=lambda actor, Model: Model.org_id == actor.org_id,
+                name="tenant",
+                description="",
+                actions=None,
+            )
+        )
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(AuditScopedPost,),
+                fn=lambda actor, Model: true(),
+                name="region",
+                description="",
+                actions=None,
+            )
+        )
 
         actor = MockActor(id=1, org_id=42)
         with caplog.at_level(logging.DEBUG, logger="sqla_authz"):
@@ -134,13 +139,15 @@ class TestAuditScopeLogging:
             name="allow_all",
             description="",
         )
-        registry.register_scope(ScopeRegistration(
-            applies_to=(AuditScopedPost,),
-            fn=lambda actor, Model: Model.org_id == actor.org_id,
-            name="tenant",
-            description="",
-            actions=None,
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(AuditScopedPost,),
+                fn=lambda actor, Model: Model.org_id == actor.org_id,
+                name="tenant",
+                description="",
+                actions=None,
+            )
+        )
 
         actor = MockActor(id=1, org_id=42)
         with caplog.at_level(logging.DEBUG, logger="sqla_authz"):

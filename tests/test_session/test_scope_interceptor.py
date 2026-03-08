@@ -8,9 +8,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sess
 from sqla_authz.policy._registry import PolicyRegistry
 from sqla_authz.policy._scope import ScopeRegistration
 from sqla_authz.session._interceptor import install_interceptor
-
 from tests.conftest import MockActor
-
 
 # ---------------------------------------------------------------------------
 # Test-local models with org_id
@@ -42,17 +40,23 @@ class TestScopeWithInterceptor:
 
         # Register a policy
         registry.register(
-            TenantItem, "read",
+            TenantItem,
+            "read",
             lambda actor: TenantItem.is_active == True,  # noqa: E712
-            name="active_only", description="",
+            name="active_only",
+            description="",
         )
 
         # Register a scope
-        registry.register_scope(ScopeRegistration(
-            applies_to=(TenantItem,),
-            fn=lambda actor, Model: Model.org_id == actor.org_id,
-            name="tenant", description="", actions=None,
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(TenantItem,),
+                fn=lambda actor, Model: Model.org_id == actor.org_id,
+                name="tenant",
+                description="",
+                actions=None,
+            )
+        )
 
         actor = MockActor(id=1, org_id=42)
         factory = sessionmaker(bind=engine)
@@ -60,12 +64,14 @@ class TestScopeWithInterceptor:
 
         # Seed data
         with Session(engine) as seed_session:
-            seed_session.add_all([
-                TenantItem(id=1, name="mine-active", org_id=42, is_active=True),
-                TenantItem(id=2, name="mine-inactive", org_id=42, is_active=False),
-                TenantItem(id=3, name="other-active", org_id=99, is_active=True),
-                TenantItem(id=4, name="other-inactive", org_id=99, is_active=False),
-            ])
+            seed_session.add_all(
+                [
+                    TenantItem(id=1, name="mine-active", org_id=42, is_active=True),
+                    TenantItem(id=2, name="mine-inactive", org_id=42, is_active=False),
+                    TenantItem(id=3, name="other-active", org_id=99, is_active=True),
+                    TenantItem(id=4, name="other-inactive", org_id=99, is_active=False),
+                ]
+            )
             seed_session.commit()
 
         # Query through authorized session
@@ -84,29 +90,39 @@ class TestScopeWithInterceptor:
         registry = PolicyRegistry()
 
         registry.register(
-            TenantItem, "read",
+            TenantItem,
+            "read",
             lambda actor: TenantItem.is_active == True,  # noqa: E712
-            name="active_only", description="",
+            name="active_only",
+            description="",
         )
 
         from sqlalchemy import true
 
-        registry.register_scope(ScopeRegistration(
-            applies_to=(TenantItem,),
-            fn=lambda actor, Model: true() if actor.role == "admin" else Model.org_id == actor.org_id,
-            name="tenant", description="", actions=None,
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(TenantItem,),
+                fn=lambda actor, Model: (
+                    true() if actor.role == "admin" else Model.org_id == actor.org_id
+                ),
+                name="tenant",
+                description="",
+                actions=None,
+            )
+        )
 
         admin = MockActor(id=1, role="admin", org_id=1)
         factory = sessionmaker(bind=engine)
         install_interceptor(factory, actor_provider=lambda: admin, registry=registry)
 
         with Session(engine) as seed_session:
-            seed_session.add_all([
-                TenantItem(id=1, name="org1-active", org_id=1, is_active=True),
-                TenantItem(id=2, name="org2-active", org_id=2, is_active=True),
-                TenantItem(id=3, name="org2-inactive", org_id=2, is_active=False),
-            ])
+            seed_session.add_all(
+                [
+                    TenantItem(id=1, name="org1-active", org_id=1, is_active=True),
+                    TenantItem(id=2, name="org2-active", org_id=2, is_active=True),
+                    TenantItem(id=3, name="org2-inactive", org_id=2, is_active=False),
+                ]
+            )
             seed_session.commit()
 
         with factory() as session:

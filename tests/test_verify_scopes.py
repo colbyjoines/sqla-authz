@@ -11,7 +11,6 @@ from sqla_authz.exceptions import UnscopedModelError
 from sqla_authz.policy._registry import PolicyRegistry
 from sqla_authz.policy._scope import ScopeRegistration
 
-
 # ---------------------------------------------------------------------------
 # Test-local models for verify_scopes testing
 # ---------------------------------------------------------------------------
@@ -46,11 +45,15 @@ class TestVerifyScopes:
         """verify_scopes raises UnscopedModelError for unscoped models."""
         registry = PolicyRegistry()
         # Only register scope for ScopedModel, not UnscopedModel
-        registry.register_scope(ScopeRegistration(
-            applies_to=(ScopedModel,),
-            fn=lambda actor, Model: Model.org_id == actor.org_id,
-            name="tenant", description="", actions=None,
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(ScopedModel,),
+                fn=lambda actor, Model: Model.org_id == actor.org_id,
+                name="tenant",
+                description="",
+                actions=None,
+            )
+        )
 
         with pytest.raises(UnscopedModelError) as exc_info:
             verify_scopes(VerifyBase, field="org_id", registry=registry)
@@ -61,11 +64,15 @@ class TestVerifyScopes:
     def test_passes_when_all_models_scoped(self) -> None:
         """verify_scopes succeeds when all matching models have scopes."""
         registry = PolicyRegistry()
-        registry.register_scope(ScopeRegistration(
-            applies_to=(ScopedModel, UnscopedModel),
-            fn=lambda actor, Model: Model.org_id == actor.org_id,
-            name="tenant", description="", actions=None,
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(ScopedModel, UnscopedModel),
+                fn=lambda actor, Model: Model.org_id == actor.org_id,
+                name="tenant",
+                description="",
+                actions=None,
+            )
+        )
 
         # Should not raise
         verify_scopes(VerifyBase, field="org_id", registry=registry)
@@ -73,11 +80,15 @@ class TestVerifyScopes:
     def test_ignores_models_without_field(self) -> None:
         """verify_scopes ignores models that don't have the specified field."""
         registry = PolicyRegistry()
-        registry.register_scope(ScopeRegistration(
-            applies_to=(ScopedModel, UnscopedModel),
-            fn=lambda actor, Model: Model.org_id == actor.org_id,
-            name="tenant", description="", actions=None,
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(ScopedModel, UnscopedModel),
+                fn=lambda actor, Model: Model.org_id == actor.org_id,
+                name="tenant",
+                description="",
+                actions=None,
+            )
+        )
 
         # NoOrgModel has no org_id — should pass without scoping it
         verify_scopes(VerifyBase, field="org_id", registry=registry)

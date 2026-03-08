@@ -223,10 +223,7 @@ class UnscopedModelError(AuthzError):
         self.field = field
         names = ", ".join(m.__name__ for m in models)
         if field:
-            msg = (
-                f"The following models have a '{field}' column but no "
-                f"registered scope: {names}"
-            )
+            msg = f"The following models have a '{field}' column but no registered scope: {names}"
         else:
             msg = f"The following models have no registered scope: {names}"
         super().__init__(msg)

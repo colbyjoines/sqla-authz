@@ -9,8 +9,7 @@ from sqlalchemy import ColumnElement, true
 
 from sqla_authz.policy._registry import PolicyRegistry
 from sqla_authz.policy._scope import ScopeRegistration, scope
-
-from tests.conftest import MockActor, Post, Tag, User
+from tests.conftest import MockActor, Post, User
 
 
 class TestScopeRegistration:
@@ -227,8 +226,7 @@ class TestRegistryScopeMethods:
             registry.register_scope(reg)
 
         threads = [
-            threading.Thread(target=register_scope_fn, args=(i,))
-            for i in range(num_threads)
+            threading.Thread(target=register_scope_fn, args=(i,)) for i in range(num_threads)
         ]
         for t in threads:
             t.start()

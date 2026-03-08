@@ -353,13 +353,13 @@ class TestAsyncSafeGet:
         """async_safe_get returns entity when actor is authorized."""
         actor = MockActor(id=1)
         registry.register(
-            Post, "read",
+            Post,
+            "read",
             lambda a: Post.is_published == True,
-            name="published_only", description="",
+            name="published_only",
+            description="",
         )
-        result = await async_safe_get(
-            async_session, Post, 1, actor=actor, registry=registry
-        )
+        result = await async_safe_get(async_session, Post, 1, actor=actor, registry=registry)
         assert result is not None
         assert result.id == 1
 
@@ -368,13 +368,13 @@ class TestAsyncSafeGet:
         """async_safe_get returns None when actor is not authorized."""
         actor = MockActor(id=1)
         registry.register(
-            Post, "read",
+            Post,
+            "read",
             lambda a: Post.is_published == True,
-            name="published_only", description="",
+            name="published_only",
+            description="",
         )
-        result = await async_safe_get(
-            async_session, Post, 2, actor=actor, registry=registry
-        )
+        result = await async_safe_get(async_session, Post, 2, actor=actor, registry=registry)
         assert result is None
 
     @pytest.mark.asyncio
@@ -382,13 +382,13 @@ class TestAsyncSafeGet:
         """async_safe_get returns None when entity does not exist."""
         actor = MockActor(id=1)
         registry.register(
-            Post, "read",
+            Post,
+            "read",
             lambda a: true(),
-            name="allow_all", description="",
+            name="allow_all",
+            description="",
         )
-        result = await async_safe_get(
-            async_session, Post, 999, actor=actor, registry=registry
-        )
+        result = await async_safe_get(async_session, Post, 999, actor=actor, registry=registry)
         assert result is None
 
 
@@ -426,14 +426,14 @@ class TestAsyncSafeGetOrRaise:
         """async_safe_get_or_raise raises AuthorizationDenied when denied."""
         actor = MockActor(id=1)
         registry.register(
-            Post, "read",
+            Post,
+            "read",
             lambda a: Post.is_published == True,
-            name="published_only", description="",
+            name="published_only",
+            description="",
         )
         with pytest.raises(AuthorizationDenied) as exc_info:
-            await async_safe_get_or_raise(
-                async_session, Post, 2, actor=actor, registry=registry
-            )
+            await async_safe_get_or_raise(async_session, Post, 2, actor=actor, registry=registry)
         assert exc_info.value.action == "read"
 
     @pytest.mark.asyncio
@@ -441,9 +441,11 @@ class TestAsyncSafeGetOrRaise:
         """async_safe_get_or_raise returns None when entity does not exist."""
         actor = MockActor(id=1)
         registry.register(
-            Post, "read",
+            Post,
+            "read",
             lambda a: true(),
-            name="allow_all", description="",
+            name="allow_all",
+            description="",
         )
         result = await async_safe_get_or_raise(
             async_session, Post, 999, actor=actor, registry=registry

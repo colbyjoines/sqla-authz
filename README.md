@@ -1,15 +1,5 @@
 <a id="readme-top"></a>
 
-<!-- PROJECT SHIELDS -->
-[![Contributors][contributors-shield]][contributors-url]
-[![Forks][forks-shield]][forks-url]
-[![Stargazers][stars-shield]][stars-url]
-[![Issues][issues-shield]][issues-url]
-[![MIT License][license-shield]][license-url]
-[![CI][ci-shield]][ci-url]
-[![codecov][codecov-shield]][codecov-url]
-[![PyPI version][pypi-shield]][pypi-url]
-
 
 
 <!-- PROJECT LOGO -->
@@ -255,29 +245,3 @@ _For more examples and advanced patterns, see the [Documentation](https://colbyj
 
 
 
-<!-- MARKDOWN LINKS & IMAGES -->
-<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[contributors-shield]: https://img.shields.io/github/contributors/colbyjoines/sqla-authz.svg?style=for-the-badge
-[contributors-url]: https://github.com/colbyjoines/sqla-authz/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/colbyjoines/sqla-authz.svg?style=for-the-badge
-[forks-url]: https://github.com/colbyjoines/sqla-authz/network/members
-[stars-shield]: https://img.shields.io/github/stars/colbyjoines/sqla-authz.svg?style=for-the-badge
-[stars-url]: https://github.com/colbyjoines/sqla-authz/stargazers
-[issues-shield]: https://img.shields.io/github/issues/colbyjoines/sqla-authz.svg?style=for-the-badge
-[issues-url]: https://github.com/colbyjoines/sqla-authz/issues
-[license-shield]: https://img.shields.io/github/license/colbyjoines/sqla-authz.svg?style=for-the-badge
-[license-url]: https://github.com/colbyjoines/sqla-authz/blob/main/LICENSE
-[ci-shield]: https://img.shields.io/github/actions/workflow/status/colbyjoines/sqla-authz/ci.yml?style=for-the-badge&label=CI
-[ci-url]: https://github.com/colbyjoines/sqla-authz/actions/workflows/ci.yml
-[codecov-shield]: https://img.shields.io/codecov/c/github/colbyjoines/sqla-authz?style=for-the-badge
-[codecov-url]: https://codecov.io/gh/colbyjoines/sqla-authz
-[pypi-shield]: https://img.shields.io/pypi/v/sqla-authz?style=for-the-badge
-[pypi-url]: https://pypi.org/project/sqla-authz/
-[Python-shield]: https://img.shields.io/badge/Python-3.10+-0f172a?style=for-the-badge&logo=python&logoColor=white
-[Python-url]: https://www.python.org/
-[SQLAlchemy-shield]: https://img.shields.io/badge/SQLAlchemy-2.0+-0f172a?style=for-the-badge&logo=sqlalchemy&logoColor=white
-[SQLAlchemy-url]: https://www.sqlalchemy.org/
-[FastAPI-shield]: https://img.shields.io/badge/FastAPI-0f172a?style=for-the-badge&logo=fastapi&logoColor=white
-[FastAPI-url]: https://fastapi.tiangolo.com/
-[Pytest-shield]: https://img.shields.io/badge/Pytest-0f172a?style=for-the-badge&logo=pytest&logoColor=white
-[Pytest-url]: https://docs.pytest.org/

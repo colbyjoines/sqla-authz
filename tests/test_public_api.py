@@ -175,8 +175,14 @@ class TestPolicyExports:
         )
 
         for sym in [
-            policy, PolicyRegistry, PolicyRegistration, get_default_registry,
-            Predicate, predicate, always_allow, always_deny,
+            policy,
+            PolicyRegistry,
+            PolicyRegistration,
+            get_default_registry,
+            Predicate,
+            predicate,
+            always_allow,
+            always_deny,
         ]:
             assert sym is not None
 

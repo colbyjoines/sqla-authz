@@ -20,8 +20,12 @@ class TestExplainAccessQueryOnly:
         """explain_access() output shows query_only in AccessPolicyEvaluation."""
         registry = PolicyRegistry()
         registry.register(
-            Post, "read", _published_policy,
-            name="published", description="Published posts", query_only=True,
+            Post,
+            "read",
+            _published_policy,
+            name="published",
+            description="Published posts",
+            query_only=True,
         )
 
         post = sample_data["posts"][0]  # published
@@ -35,8 +39,12 @@ class TestExplainAccessQueryOnly:
         """explain_access() can evaluate query_only policies via SQLite."""
         registry = PolicyRegistry()
         registry.register(
-            Post, "read", _published_policy,
-            name="published", description="Published posts", query_only=True,
+            Post,
+            "read",
+            _published_policy,
+            name="published",
+            description="Published posts",
+            query_only=True,
         )
 
         post = sample_data["posts"][0]  # published
@@ -51,8 +59,12 @@ class TestExplainAccessQueryOnly:
         """String output includes [query-only] prefix."""
         registry = PolicyRegistry()
         registry.register(
-            Post, "read", _published_policy,
-            name="published", description="Published posts", query_only=True,
+            Post,
+            "read",
+            _published_policy,
+            name="published",
+            description="Published posts",
+            query_only=True,
         )
 
         post = sample_data["posts"][0]
@@ -66,8 +78,11 @@ class TestExplainAccessQueryOnly:
         """Non-query-only policies don't get [query-only] prefix."""
         registry = PolicyRegistry()
         registry.register(
-            Post, "read", _published_policy,
-            name="published", description="Published posts",
+            Post,
+            "read",
+            _published_policy,
+            name="published",
+            description="Published posts",
         )
 
         post = sample_data["posts"][0]
@@ -82,8 +97,12 @@ class TestExplainAccessQueryOnly:
         """to_dict() includes query_only when True."""
         registry = PolicyRegistry()
         registry.register(
-            Post, "read", _published_policy,
-            name="published", description="Published posts", query_only=True,
+            Post,
+            "read",
+            _published_policy,
+            name="published",
+            description="Published posts",
+            query_only=True,
         )
 
         post = sample_data["posts"][0]
@@ -97,8 +116,11 @@ class TestExplainAccessQueryOnly:
         """to_dict() omits query_only when False (keeps output clean)."""
         registry = PolicyRegistry()
         registry.register(
-            Post, "read", _published_policy,
-            name="published", description="Published posts",
+            Post,
+            "read",
+            _published_policy,
+            name="published",
+            description="Published posts",
         )
 
         post = sample_data["posts"][0]

@@ -12,7 +12,6 @@ from sqla_authz.policy._registry import PolicyRegistry
 from sqla_authz.policy._scope import ScopeRegistration
 from tests.conftest import MockActor
 
-
 # ---------------------------------------------------------------------------
 # Test-local model with org_id for scope testing
 # ---------------------------------------------------------------------------
@@ -45,13 +44,15 @@ class TestExplainAccessScopes:
             name="published_only",
             description="Allow reading published posts",
         )
-        registry.register_scope(ScopeRegistration(
-            applies_to=(ScopedPost,),
-            fn=lambda actor, Model: Model.org_id == actor.org_id,
-            name="tenant",
-            description="Tenant isolation",
-            actions=None,
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(ScopedPost,),
+                fn=lambda actor, Model: Model.org_id == actor.org_id,
+                name="tenant",
+                description="Tenant isolation",
+                actions=None,
+            )
+        )
 
         actor = MockActor(id=1, org_id=42)
         post = self._make_post(id=1, org_id=42, is_published=True)
@@ -72,13 +73,15 @@ class TestExplainAccessScopes:
             name="published_only",
             description="Published posts",
         )
-        registry.register_scope(ScopeRegistration(
-            applies_to=(ScopedPost,),
-            fn=lambda actor, Model: Model.org_id == actor.org_id,
-            name="tenant",
-            description="Tenant isolation",
-            actions=None,
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(ScopedPost,),
+                fn=lambda actor, Model: Model.org_id == actor.org_id,
+                name="tenant",
+                description="Tenant isolation",
+                actions=None,
+            )
+        )
 
         actor = MockActor(id=1, org_id=99)  # Wrong org
         post = self._make_post(id=1, org_id=42, is_published=True)
@@ -117,20 +120,24 @@ class TestExplainAccessScopes:
             name="allow_all",
             description="",
         )
-        registry.register_scope(ScopeRegistration(
-            applies_to=(ScopedPost,),
-            fn=lambda actor, Model: Model.org_id == actor.org_id,
-            name="tenant",
-            description="Tenant isolation",
-            actions=None,
-        ))
-        registry.register_scope(ScopeRegistration(
-            applies_to=(ScopedPost,),
-            fn=lambda actor, Model: Model.is_published == True,  # noqa: E712
-            name="published_only",
-            description="Only published",
-            actions=None,
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(ScopedPost,),
+                fn=lambda actor, Model: Model.org_id == actor.org_id,
+                name="tenant",
+                description="Tenant isolation",
+                actions=None,
+            )
+        )
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(ScopedPost,),
+                fn=lambda actor, Model: Model.is_published == True,  # noqa: E712
+                name="published_only",
+                description="Only published",
+                actions=None,
+            )
+        )
 
         actor = MockActor(id=1, org_id=42)
         # Right org but not published -> second scope blocks
@@ -153,13 +160,17 @@ class TestExplainAccessScopes:
             name="published",
             description="",
         )
-        registry.register_scope(ScopeRegistration(
-            applies_to=(ScopedPost,),
-            fn=lambda actor, Model: true() if actor.role == "admin" else Model.org_id == actor.org_id,
-            name="tenant",
-            description="",
-            actions=None,
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(ScopedPost,),
+                fn=lambda actor, Model: (
+                    true() if actor.role == "admin" else Model.org_id == actor.org_id
+                ),
+                name="tenant",
+                description="",
+                actions=None,
+            )
+        )
 
         admin = MockActor(id=1, role="admin", org_id=1)
         post = self._make_post(id=1, org_id=999, is_published=True)
@@ -171,13 +182,15 @@ class TestExplainAccessScopes:
     def test_deny_by_default_no_scopes_evaluated(self) -> None:
         """When no policies exist, scopes are not evaluated."""
         registry = PolicyRegistry()
-        registry.register_scope(ScopeRegistration(
-            applies_to=(ScopedPost,),
-            fn=lambda actor, Model: Model.org_id == actor.org_id,
-            name="tenant",
-            description="",
-            actions=None,
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(ScopedPost,),
+                fn=lambda actor, Model: Model.org_id == actor.org_id,
+                name="tenant",
+                description="",
+                actions=None,
+            )
+        )
 
         actor = MockActor(id=1, org_id=42)
         post = self._make_post(id=1, org_id=42, is_published=True)
@@ -197,13 +210,15 @@ class TestExplainAccessScopes:
             name="published",
             description="",
         )
-        registry.register_scope(ScopeRegistration(
-            applies_to=(ScopedPost,),
-            fn=lambda actor, Model: Model.org_id == actor.org_id,
-            name="tenant",
-            description="Tenant isolation",
-            actions=None,
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(ScopedPost,),
+                fn=lambda actor, Model: Model.org_id == actor.org_id,
+                name="tenant",
+                description="Tenant isolation",
+                actions=None,
+            )
+        )
 
         actor = MockActor(id=1, org_id=42)
         post = self._make_post(id=1, org_id=42, is_published=True)
@@ -227,13 +242,15 @@ class TestExplainAccessScopes:
             name="published",
             description="Published posts",
         )
-        registry.register_scope(ScopeRegistration(
-            applies_to=(ScopedPost,),
-            fn=lambda actor, Model: Model.org_id == actor.org_id,
-            name="tenant",
-            description="Tenant isolation",
-            actions=None,
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(ScopedPost,),
+                fn=lambda actor, Model: Model.org_id == actor.org_id,
+                name="tenant",
+                description="Tenant isolation",
+                actions=None,
+            )
+        )
 
         actor = MockActor(id=1, org_id=99)
         post = self._make_post(id=1, org_id=42, is_published=True)
@@ -262,13 +279,15 @@ class TestExplainAccessScopes:
             name="allow_del",
             description="",
         )
-        registry.register_scope(ScopeRegistration(
-            applies_to=(ScopedPost,),
-            fn=lambda actor, Model: Model.org_id == actor.org_id,
-            name="tenant",
-            description="",
-            actions=("read",),
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(ScopedPost,),
+                fn=lambda actor, Model: Model.org_id == actor.org_id,
+                name="tenant",
+                description="",
+                actions=("read",),
+            )
+        )
 
         actor = MockActor(id=1, org_id=99)
         post = self._make_post(id=1, org_id=42, is_published=True)

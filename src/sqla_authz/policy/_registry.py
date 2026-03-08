@@ -224,11 +224,7 @@ class PolicyRegistry:
             # e.g., {"read", "update"}
         """
         with self._lock:
-            return {
-                act
-                for rt, act in self._policies.keys()
-                if rt is resource_type
-            }
+            return {act for rt, act in self._policies.keys() if rt is resource_type}
 
     def register_scope(self, scope_reg: ScopeRegistration) -> None:
         """Register a cross-cutting scope filter.

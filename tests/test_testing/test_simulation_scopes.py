@@ -10,7 +10,6 @@ from sqla_authz.policy._scope import ScopeRegistration
 from sqla_authz.testing._actors import MockActor
 from sqla_authz.testing._simulation import simulate_query
 
-
 # ---------------------------------------------------------------------------
 # Test-local model
 # ---------------------------------------------------------------------------
@@ -40,13 +39,15 @@ class TestSimulateQueryScopes:
             name="published",
             description="",
         )
-        registry.register_scope(ScopeRegistration(
-            applies_to=(SimScopedPost,),
-            fn=lambda actor, Model: Model.org_id == actor.org_id,
-            name="tenant",
-            description="",
-            actions=None,
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(SimScopedPost,),
+                fn=lambda actor, Model: Model.org_id == actor.org_id,
+                name="tenant",
+                description="",
+                actions=None,
+            )
+        )
 
         actor = MockActor(id=1, org_id=42)
         stmt = select(SimScopedPost)
@@ -82,20 +83,24 @@ class TestSimulateQueryScopes:
             name="allow_all",
             description="",
         )
-        registry.register_scope(ScopeRegistration(
-            applies_to=(SimScopedPost,),
-            fn=lambda actor, Model: Model.org_id == actor.org_id,
-            name="tenant",
-            description="",
-            actions=None,
-        ))
-        registry.register_scope(ScopeRegistration(
-            applies_to=(SimScopedPost,),
-            fn=lambda actor, Model: Model.is_published == True,  # noqa: E712
-            name="published_scope",
-            description="",
-            actions=None,
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(SimScopedPost,),
+                fn=lambda actor, Model: Model.org_id == actor.org_id,
+                name="tenant",
+                description="",
+                actions=None,
+            )
+        )
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(SimScopedPost,),
+                fn=lambda actor, Model: Model.is_published == True,  # noqa: E712
+                name="published_scope",
+                description="",
+                actions=None,
+            )
+        )
 
         actor = MockActor(id=1, org_id=42)
         stmt = select(SimScopedPost)
@@ -113,13 +118,15 @@ class TestSimulateQueryScopes:
             name="published",
             description="",
         )
-        registry.register_scope(ScopeRegistration(
-            applies_to=(SimScopedPost,),
-            fn=lambda actor, Model: Model.org_id == actor.org_id,
-            name="tenant",
-            description="",
-            actions=None,
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(SimScopedPost,),
+                fn=lambda actor, Model: Model.org_id == actor.org_id,
+                name="tenant",
+                description="",
+                actions=None,
+            )
+        )
 
         actor = MockActor(id=1, org_id=42)
         stmt = select(SimScopedPost)
@@ -137,13 +144,15 @@ class TestSimulateQueryScopes:
             name="allow",
             description="",
         )
-        registry.register_scope(ScopeRegistration(
-            applies_to=(SimScopedPost,),
-            fn=lambda actor, Model: Model.org_id == actor.org_id,
-            name="tenant",
-            description="",
-            actions=None,
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(SimScopedPost,),
+                fn=lambda actor, Model: Model.org_id == actor.org_id,
+                name="tenant",
+                description="",
+                actions=None,
+            )
+        )
 
         actor = MockActor(id=1, org_id=42)
         stmt = select(SimScopedPost)

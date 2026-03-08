@@ -37,8 +37,12 @@ class TestCanQueryOnly:
         """can() raises QueryOnlyPolicyError for query_only=True policies."""
         registry = PolicyRegistry()
         registry.register(
-            Post, "read", _query_only_policy,
-            name="complex_read", description="", query_only=True,
+            Post,
+            "read",
+            _query_only_policy,
+            name="complex_read",
+            description="",
+            query_only=True,
         )
 
         post = sample_data["posts"][0]
@@ -51,8 +55,11 @@ class TestCanQueryOnly:
         """can() works normally when query_only=False (default)."""
         registry = PolicyRegistry()
         registry.register(
-            Post, "read", _published_policy,
-            name="published", description="",
+            Post,
+            "read",
+            _published_policy,
+            name="published",
+            description="",
         )
 
         post = sample_data["posts"][0]  # published
@@ -64,12 +71,19 @@ class TestCanQueryOnly:
         """If any policy for (model, action) is query-only, can() raises."""
         registry = PolicyRegistry()
         registry.register(
-            Post, "read", _published_policy,
-            name="published", description="",
+            Post,
+            "read",
+            _published_policy,
+            name="published",
+            description="",
         )
         registry.register(
-            Post, "read", _query_only_policy,
-            name="complex_read", description="", query_only=True,
+            Post,
+            "read",
+            _query_only_policy,
+            name="complex_read",
+            description="",
+            query_only=True,
         )
 
         post = sample_data["posts"][0]
@@ -85,8 +99,11 @@ class TestCanQueryOnly:
         """Without query_only, func.lower() silently returns False."""
         registry = PolicyRegistry()
         registry.register(
-            Post, "read", _query_only_policy,
-            name="complex_read", description="",  # query_only=False (default)
+            Post,
+            "read",
+            _query_only_policy,
+            name="complex_read",
+            description="",  # query_only=False (default)
         )
 
         post = sample_data["posts"][0]
@@ -108,8 +125,12 @@ class TestAuthorizeQueryOnly:
         """authorize() propagates QueryOnlyPolicyError from can()."""
         registry = PolicyRegistry()
         registry.register(
-            Post, "read", _query_only_policy,
-            name="complex_read", description="", query_only=True,
+            Post,
+            "read",
+            _query_only_policy,
+            name="complex_read",
+            description="",
+            query_only=True,
         )
 
         post = sample_data["posts"][0]
@@ -176,8 +197,12 @@ class TestAuthorizeQueryUnaffected:
         """authorize_query() doesn't check query_only -- it works for all policies."""
         registry = PolicyRegistry()
         registry.register(
-            Post, "read", _query_only_policy,
-            name="complex_read", description="", query_only=True,
+            Post,
+            "read",
+            _query_only_policy,
+            name="complex_read",
+            description="",
+            query_only=True,
         )
 
         actor = MockActor(id=1)

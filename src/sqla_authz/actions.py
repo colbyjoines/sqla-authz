@@ -78,12 +78,10 @@ def action(name: str) -> str:
         raise ValueError("Action name must be non-empty")
     if not name.replace("_", "").isalpha():
         raise ValueError(
-            f"Action name must contain only lowercase letters and underscores, "
-            f"got {name!r}"
+            f"Action name must contain only lowercase letters and underscores, got {name!r}"
         )
     if not name.islower():
         raise ValueError(
-            f"Action name must be lowercase, got {name!r}. "
-            f"Use {name.lower()!r} instead."
+            f"Action name must be lowercase, got {name!r}. Use {name.lower()!r} instead."
         )
     return name

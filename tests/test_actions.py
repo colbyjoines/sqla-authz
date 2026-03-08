@@ -14,7 +14,6 @@ from sqla_authz.exceptions import UnknownActionError
 from sqla_authz.policy._registry import PolicyRegistry
 from tests.conftest import MockActor, Post, User
 
-
 # ---------------------------------------------------------------------------
 # Action constants
 # ---------------------------------------------------------------------------

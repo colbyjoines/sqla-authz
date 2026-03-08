@@ -153,9 +153,7 @@ class AuthzExplanation:
                     lines.append(f"        SQL: {p.filter_sql}")
                 if entity.scopes_applied:
                     scope_names = ", ".join(entity.scope_names)
-                    lines.append(
-                        f"    Scopes ({entity.scopes_applied}): {scope_names}"
-                    )
+                    lines.append(f"    Scopes ({entity.scopes_applied}): {scope_names}")
                 lines.append(f"    Combined SQL: {entity.combined_filter_sql}")
             lines.append("")
         lines.append(f"  Authorized SQL: {self.authorized_sql}")

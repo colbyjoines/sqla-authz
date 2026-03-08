@@ -2,16 +2,14 @@
 
 from __future__ import annotations
 
-from sqlalchemy import ColumnElement, Integer, String, select, true
+from sqlalchemy import Integer, String, select, true
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from sqla_authz.compiler._eval import eval_expression
 from sqla_authz.compiler._expression import evaluate_policies
 from sqla_authz.policy._registry import PolicyRegistry
 from sqla_authz.policy._scope import ScopeRegistration
-
 from tests.conftest import MockActor
-
 
 # ---------------------------------------------------------------------------
 # Test-local models with org_id for scope testing
@@ -52,15 +50,21 @@ class TestScopeComposition:
         """A scope is AND'd with the policy result."""
         registry = PolicyRegistry()
         registry.register(
-            TenantPost, "read",
+            TenantPost,
+            "read",
             lambda actor: TenantPost.is_published == True,  # noqa: E712
-            name="published", description="",
+            name="published",
+            description="",
         )
-        registry.register_scope(ScopeRegistration(
-            applies_to=(TenantPost,),
-            fn=lambda actor, Model: Model.org_id == actor.org_id,
-            name="tenant", description="", actions=None,
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(TenantPost,),
+                fn=lambda actor, Model: Model.org_id == actor.org_id,
+                name="tenant",
+                description="",
+                actions=None,
+            )
+        )
 
         actor = MockActor(id=1, org_id=42)
         expr = evaluate_policies(registry, TenantPost, "read", actor)
@@ -73,20 +77,30 @@ class TestScopeComposition:
         """Multiple scopes on the same model are all AND'd."""
         registry = PolicyRegistry()
         registry.register(
-            TenantPost, "read",
+            TenantPost,
+            "read",
             lambda actor: true(),
-            name="allow_all", description="",
+            name="allow_all",
+            description="",
         )
-        registry.register_scope(ScopeRegistration(
-            applies_to=(TenantPost,),
-            fn=lambda actor, Model: Model.org_id == actor.org_id,
-            name="tenant", description="", actions=None,
-        ))
-        registry.register_scope(ScopeRegistration(
-            applies_to=(TenantPost,),
-            fn=lambda actor, Model: Model.deleted_at.is_(None),
-            name="soft_delete", description="", actions=None,
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(TenantPost,),
+                fn=lambda actor, Model: Model.org_id == actor.org_id,
+                name="tenant",
+                description="",
+                actions=None,
+            )
+        )
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(TenantPost,),
+                fn=lambda actor, Model: Model.deleted_at.is_(None),
+                name="soft_delete",
+                description="",
+                actions=None,
+            )
+        )
 
         actor = MockActor(id=1, org_id=42)
         expr = evaluate_policies(registry, TenantPost, "read", actor)
@@ -98,11 +112,15 @@ class TestScopeComposition:
     def test_no_policies_returns_false_despite_scopes(self) -> None:
         """When no policies exist, false() is returned regardless of scopes."""
         registry = PolicyRegistry()
-        registry.register_scope(ScopeRegistration(
-            applies_to=(TenantPost,),
-            fn=lambda actor, Model: Model.org_id == actor.org_id,
-            name="tenant", description="", actions=None,
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(TenantPost,),
+                fn=lambda actor, Model: Model.org_id == actor.org_id,
+                name="tenant",
+                description="",
+                actions=None,
+            )
+        )
 
         actor = MockActor(id=1, org_id=42)
         expr = evaluate_policies(registry, TenantPost, "read", actor)
@@ -115,21 +133,28 @@ class TestScopeComposition:
         """A scope with actions=['read'] only applies to 'read'."""
         registry = PolicyRegistry()
         registry.register(
-            TenantPost, "read",
+            TenantPost,
+            "read",
             lambda actor: true(),
-            name="allow", description="",
+            name="allow",
+            description="",
         )
         registry.register(
-            TenantPost, "delete",
+            TenantPost,
+            "delete",
             lambda actor: true(),
-            name="allow_del", description="",
+            name="allow_del",
+            description="",
         )
-        registry.register_scope(ScopeRegistration(
-            applies_to=(TenantPost,),
-            fn=lambda actor, Model: Model.deleted_at.is_(None),
-            name="soft_delete", description="",
-            actions=("read",),
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(TenantPost,),
+                fn=lambda actor, Model: Model.deleted_at.is_(None),
+                name="soft_delete",
+                description="",
+                actions=("read",),
+            )
+        )
 
         actor = MockActor(id=1)
 
@@ -147,15 +172,23 @@ class TestScopeComposition:
         """A scope returning true() effectively bypasses the scope (admin)."""
         registry = PolicyRegistry()
         registry.register(
-            TenantPost, "read",
+            TenantPost,
+            "read",
             lambda actor: TenantPost.is_published == True,  # noqa: E712
-            name="published", description="",
+            name="published",
+            description="",
         )
-        registry.register_scope(ScopeRegistration(
-            applies_to=(TenantPost,),
-            fn=lambda actor, Model: true() if actor.role == "admin" else Model.org_id == actor.org_id,
-            name="tenant", description="", actions=None,
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(TenantPost,),
+                fn=lambda actor, Model: (
+                    true() if actor.role == "admin" else Model.org_id == actor.org_id
+                ),
+                name="tenant",
+                description="",
+                actions=None,
+            )
+        )
 
         admin = MockActor(id=1, role="admin", org_id=1)
         expr = evaluate_policies(registry, TenantPost, "read", admin)
@@ -167,15 +200,21 @@ class TestScopeComposition:
         """A scope registered for Post doesn't affect Comment."""
         registry = PolicyRegistry()
         registry.register(
-            TenantComment, "read",
+            TenantComment,
+            "read",
             lambda actor: true(),
-            name="allow", description="",
+            name="allow",
+            description="",
         )
-        registry.register_scope(ScopeRegistration(
-            applies_to=(TenantPost,),  # Only Post, not Comment
-            fn=lambda actor, Model: Model.org_id == actor.org_id,
-            name="tenant", description="", actions=None,
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(TenantPost,),  # Only Post, not Comment
+                fn=lambda actor, Model: Model.org_id == actor.org_id,
+                name="tenant",
+                description="",
+                actions=None,
+            )
+        )
 
         actor = MockActor(id=1, org_id=42)
         expr = evaluate_policies(registry, TenantComment, "read", actor)
@@ -187,21 +226,29 @@ class TestScopeComposition:
         registry = PolicyRegistry()
         # Two policies OR'd
         registry.register(
-            TenantPost, "read",
+            TenantPost,
+            "read",
             lambda actor: TenantPost.is_published == True,  # noqa: E712
-            name="published", description="",
+            name="published",
+            description="",
         )
         registry.register(
-            TenantPost, "read",
+            TenantPost,
+            "read",
             lambda actor: TenantPost.id == actor.id,
-            name="own_post", description="",
+            name="own_post",
+            description="",
         )
         # One scope AND'd
-        registry.register_scope(ScopeRegistration(
-            applies_to=(TenantPost,),
-            fn=lambda actor, Model: Model.org_id == actor.org_id,
-            name="tenant", description="", actions=None,
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(TenantPost,),
+                fn=lambda actor, Model: Model.org_id == actor.org_id,
+                name="tenant",
+                description="",
+                actions=None,
+            )
+        )
 
         actor = MockActor(id=1, org_id=42)
         expr = evaluate_policies(registry, TenantPost, "read", actor)
@@ -217,15 +264,21 @@ class TestScopeWithInMemoryEval:
         """Scoped expressions are correctly evaluated by eval_expression()."""
         registry = PolicyRegistry()
         registry.register(
-            TenantPost, "read",
+            TenantPost,
+            "read",
             lambda actor: TenantPost.is_published == True,  # noqa: E712
-            name="published", description="",
+            name="published",
+            description="",
         )
-        registry.register_scope(ScopeRegistration(
-            applies_to=(TenantPost,),
-            fn=lambda actor, Model: Model.org_id == actor.org_id,
-            name="tenant", description="", actions=None,
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(TenantPost,),
+                fn=lambda actor, Model: Model.org_id == actor.org_id,
+                name="tenant",
+                description="",
+                actions=None,
+            )
+        )
 
         actor = MockActor(id=1, org_id=42)
         expr = evaluate_policies(registry, TenantPost, "read", actor)
@@ -246,15 +299,23 @@ class TestScopeWithInMemoryEval:
         """Admin bypass (true()) works in in-memory evaluation."""
         registry = PolicyRegistry()
         registry.register(
-            TenantPost, "read",
+            TenantPost,
+            "read",
             lambda actor: TenantPost.is_published == True,  # noqa: E712
-            name="published", description="",
+            name="published",
+            description="",
         )
-        registry.register_scope(ScopeRegistration(
-            applies_to=(TenantPost,),
-            fn=lambda actor, Model: true() if actor.role == "admin" else Model.org_id == actor.org_id,
-            name="tenant", description="", actions=None,
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(TenantPost,),
+                fn=lambda actor, Model: (
+                    true() if actor.role == "admin" else Model.org_id == actor.org_id
+                ),
+                name="tenant",
+                description="",
+                actions=None,
+            )
+        )
 
         admin = MockActor(id=1, role="admin", org_id=1)
         expr = evaluate_policies(registry, TenantPost, "read", admin)
@@ -273,15 +334,21 @@ class TestScopeWithAuthorizeQuery:
 
         registry = PolicyRegistry()
         registry.register(
-            TenantPost, "read",
+            TenantPost,
+            "read",
             lambda actor: TenantPost.is_published == True,  # noqa: E712
-            name="published", description="",
+            name="published",
+            description="",
         )
-        registry.register_scope(ScopeRegistration(
-            applies_to=(TenantPost,),
-            fn=lambda actor, Model: Model.org_id == actor.org_id,
-            name="tenant", description="", actions=None,
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(TenantPost,),
+                fn=lambda actor, Model: Model.org_id == actor.org_id,
+                name="tenant",
+                description="",
+                actions=None,
+            )
+        )
 
         actor = MockActor(id=1, org_id=42)
         stmt = select(TenantPost)

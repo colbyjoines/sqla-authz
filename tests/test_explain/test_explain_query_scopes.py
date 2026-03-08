@@ -11,7 +11,6 @@ from sqla_authz.policy._registry import PolicyRegistry
 from sqla_authz.policy._scope import ScopeRegistration
 from tests.conftest import MockActor
 
-
 # ---------------------------------------------------------------------------
 # Test-local model with org_id for scope testing
 # ---------------------------------------------------------------------------
@@ -41,13 +40,15 @@ class TestExplainQueryScopes:
             name="published",
             description="Published posts",
         )
-        registry.register_scope(ScopeRegistration(
-            applies_to=(QueryScopedPost,),
-            fn=lambda actor, Model: Model.org_id == actor.org_id,
-            name="tenant",
-            description="",
-            actions=None,
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(QueryScopedPost,),
+                fn=lambda actor, Model: Model.org_id == actor.org_id,
+                name="tenant",
+                description="",
+                actions=None,
+            )
+        )
 
         actor = MockActor(id=1, org_id=42)
         stmt = select(QueryScopedPost)
@@ -69,13 +70,15 @@ class TestExplainQueryScopes:
             name="published",
             description="",
         )
-        registry.register_scope(ScopeRegistration(
-            applies_to=(QueryScopedPost,),
-            fn=lambda actor, Model: Model.org_id == actor.org_id,
-            name="tenant",
-            description="",
-            actions=None,
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(QueryScopedPost,),
+                fn=lambda actor, Model: Model.org_id == actor.org_id,
+                name="tenant",
+                description="",
+                actions=None,
+            )
+        )
 
         actor = MockActor(id=1, org_id=42)
         stmt = select(QueryScopedPost)
@@ -115,20 +118,24 @@ class TestExplainQueryScopes:
             name="allow_all",
             description="",
         )
-        registry.register_scope(ScopeRegistration(
-            applies_to=(QueryScopedPost,),
-            fn=lambda actor, Model: Model.org_id == actor.org_id,
-            name="tenant",
-            description="",
-            actions=None,
-        ))
-        registry.register_scope(ScopeRegistration(
-            applies_to=(QueryScopedPost,),
-            fn=lambda actor, Model: Model.is_published == True,  # noqa: E712
-            name="published_filter",
-            description="",
-            actions=None,
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(QueryScopedPost,),
+                fn=lambda actor, Model: Model.org_id == actor.org_id,
+                name="tenant",
+                description="",
+                actions=None,
+            )
+        )
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(QueryScopedPost,),
+                fn=lambda actor, Model: Model.is_published == True,  # noqa: E712
+                name="published_filter",
+                description="",
+                actions=None,
+            )
+        )
 
         actor = MockActor(id=1, org_id=42)
         stmt = select(QueryScopedPost)
@@ -150,13 +157,15 @@ class TestExplainQueryScopes:
             name="published",
             description="",
         )
-        registry.register_scope(ScopeRegistration(
-            applies_to=(QueryScopedPost,),
-            fn=lambda actor, Model: Model.org_id == actor.org_id,
-            name="tenant",
-            description="",
-            actions=None,
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(QueryScopedPost,),
+                fn=lambda actor, Model: Model.org_id == actor.org_id,
+                name="tenant",
+                description="",
+                actions=None,
+            )
+        )
 
         actor = MockActor(id=1, org_id=42)
         stmt = select(QueryScopedPost)
@@ -177,13 +186,15 @@ class TestExplainQueryScopes:
             name="published",
             description="",
         )
-        registry.register_scope(ScopeRegistration(
-            applies_to=(QueryScopedPost,),
-            fn=lambda actor, Model: Model.org_id == actor.org_id,
-            name="tenant",
-            description="",
-            actions=None,
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(QueryScopedPost,),
+                fn=lambda actor, Model: Model.org_id == actor.org_id,
+                name="tenant",
+                description="",
+                actions=None,
+            )
+        )
 
         actor = MockActor(id=1, org_id=42)
         stmt = select(QueryScopedPost)
@@ -195,13 +206,15 @@ class TestExplainQueryScopes:
     def test_deny_by_default_no_scopes(self) -> None:
         """When no policies exist (deny by default), scopes are not reported."""
         registry = PolicyRegistry()
-        registry.register_scope(ScopeRegistration(
-            applies_to=(QueryScopedPost,),
-            fn=lambda actor, Model: Model.org_id == actor.org_id,
-            name="tenant",
-            description="",
-            actions=None,
-        ))
+        registry.register_scope(
+            ScopeRegistration(
+                applies_to=(QueryScopedPost,),
+                fn=lambda actor, Model: Model.org_id == actor.org_id,
+                name="tenant",
+                description="",
+                actions=None,
+            )
+        )
 
         actor = MockActor(id=1, org_id=42)
         stmt = select(QueryScopedPost)
