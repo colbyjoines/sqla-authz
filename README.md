@@ -45,33 +45,22 @@
       <a href="#about-the-project">About The Project</a>
       <ul>
         <li><a href="#why-sqla-authz">Why sqla-authz?</a></li>
-        <li><a href="#built-with">Built With</a></li>
       </ul>
     </li>
-    <li>
-      <a href="#getting-started">Getting Started</a>
-      <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
-      </ul>
-    </li>
+    <li><a href="#getting-started">Getting Started</a></li>
     <li>
       <a href="#usage">Usage</a>
       <ul>
         <li><a href="#define-a-policy">Define a Policy</a></li>
         <li><a href="#apply-to-queries">Apply to Queries</a></li>
-        <li><a href="#rbac-role-based-access-control">RBAC</a></li>
-        <li><a href="#abac-attribute-based-access-control">ABAC</a></li>
+        <li><a href="#scopes">Scopes</a></li>
         <li><a href="#point-checks">Point Checks</a></li>
         <li><a href="#automatic-session-interception">Automatic Session Interception</a></li>
         <li><a href="#fastapi-integration">FastAPI Integration</a></li>
       </ul>
     </li>
     <li><a href="#architecture">Architecture</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
-    <li><a href="#contributing">Contributing</a></li>
-    <li><a href="#license">License</a></li>
-    <li><a href="#contact">Contact</a></li>
+    <li><a href="#references">References</a></li>
     <li><a href="#acknowledgments">Acknowledgments</a></li>
   </ol>
 </details>
@@ -134,9 +123,9 @@ Policies are plain Python functions decorated with `@policy`. They receive an ac
 
 ```python
 from sqlalchemy import ColumnElement, or_, true
-from sqla_authz import policy
+from sqla_authz import policy, READ
 
-@policy(Post, "read")
+@policy(Post, READ)
 def post_read_policy(actor: User) -> ColumnElement[bool]:
     if actor.role == "admin":
         return true()
@@ -149,88 +138,29 @@ Use `authorize_query()` to apply the policy as a WHERE clause:
 
 ```python
 from sqlalchemy import select
-from sqla_authz import authorize_query
+from sqla_authz import authorize_query, READ
 
 stmt = select(Post).order_by(Post.created_at.desc())
-stmt = authorize_query(stmt, actor=current_user, action="read")
+stmt = authorize_query(stmt, actor=current_user, action=READ)
 result = session.execute(stmt)
 # -> SELECT ... FROM post WHERE (is_published = true OR author_id = :id)
 ```
 
 No policy registered for a model? The query returns **zero rows** — authorization is deny-by-default.
 
-### RBAC (Role-Based Access Control)
+### Scopes
 
-Map roles to progressively wider filters. The role check is Python; the filter is SQL:
-
-```python
-from sqlalchemy import ColumnElement, or_, true, false
-
-ROLE_RANK = {"viewer": 0, "editor": 1, "manager": 2, "admin": 3}
-
-@policy(Post, "read")
-def post_read(actor: User) -> ColumnElement[bool]:
-    rank = ROLE_RANK.get(actor.role, 0)
-    if rank >= ROLE_RANK["admin"]:
-        return true()                    # admins see everything
-    if rank >= ROLE_RANK["editor"]:
-        return or_(Post.is_published == True, Post.author_id == actor.id)
-    return Post.is_published == True     # viewers see published only
-
-@policy(Post, "update")
-def post_update(actor: User) -> ColumnElement[bool]:
-    if actor.role == "admin":
-        return true()
-    if actor.role == "editor":
-        return Post.author_id == actor.id
-    return false()                       # viewers cannot update
-```
-
-### ABAC (Attribute-Based Access Control)
-
-Combine actor, resource, and environment attributes in a single policy.
-Python handles the attribute logic; SQL handles the row filtering:
+Scopes are cross-cutting filters (like tenant isolation) that are AND'd with all policies — define them once instead of repeating in every policy:
 
 ```python
-from datetime import datetime, timezone
-from sqlalchemy import ColumnElement, or_, true
+from sqla_authz import scope
 
-@policy(Article, "read")
-def article_read(actor: User) -> ColumnElement[bool]:
-    """Status workflow + time-gated embargo in one policy."""
-    if actor.role == "admin":
-        return true()
-    now = datetime.now(timezone.utc)
-    return or_(
-        Article.status == "published",
-        (Article.status == "review") & (Article.reviewer_id == actor.id),
-        (Article.status == "draft") & (Article.author_id == actor.id),
-    ) & or_(
-        Article.embargo_date.is_(None),
-        Article.embargo_date <= now,
-    )
+@scope(applies_to=[Post, Comment, Document])
+def tenant(actor: User, Model: type) -> ColumnElement[bool]:
+    return Model.org_id == actor.org_id
 ```
 
-Extract repeated conditions into composable predicates with `&`, `|`, `~`:
-
-```python
-from sqla_authz.policy import predicate
-
-@predicate
-def is_published(actor: User) -> ColumnElement[bool]:
-    return Post.is_published == True
-
-@predicate
-def is_author(actor: User) -> ColumnElement[bool]:
-    return Post.author_id == actor.id
-
-public_or_own = is_published | is_author
-
-@policy(Post, "read", predicate=public_or_own)
-def post_read(actor: User) -> ColumnElement[bool]: ...
-```
-
-_For more patterns (multi-tenant, sensitivity levels, safe lookups), see [Patterns](https://colbyjoines.github.io/sqla-authz/patterns/)._
+Composition: `final_filter = (policy_1 OR policy_2) AND scope_1 AND scope_2`. Use `verify_scopes(Base, field="org_id")` at startup to catch models missing a scope.
 
 ### Point Checks
 
@@ -265,11 +195,11 @@ Session = authorized_sessionmaker(
 Inject authorized query results directly into your endpoints:
 
 ```python
-from sqla_authz.integrations.fastapi import AuthzDep, get_actor, get_session
+from sqla_authz.integrations.fastapi import AuthzDep, get_actor, get_session, install_error_handlers
 
-# Wire up your actor and session providers via dependency overrides
 app.dependency_overrides[get_actor] = get_current_user
 app.dependency_overrides[get_session] = get_db
+install_error_handlers(app)  # maps AuthorizationDenied → 403, NoPolicyError → 500
 
 @app.get("/posts")
 async def list_posts(posts: list[Post] = AuthzDep(Post, "read")):
@@ -280,7 +210,7 @@ async def get_post(post: Post = AuthzDep(Post, "read", id_param="post_id")):
     return post
 ```
 
-_For more examples and advanced patterns (predicates, relationship traversal, audit logging, debugging), please refer to the [Documentation](https://colbyjoines.github.io/sqla-authz/)._
+_For more examples and advanced patterns, see the [Documentation](https://colbyjoines.github.io/sqla-authz/)._
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
