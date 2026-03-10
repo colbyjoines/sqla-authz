@@ -1,6 +1,6 @@
 [project]
 name = "sqla-authz"
-version = "0.1.0b3"
+version = "0.1.0b4"
 description = "Database-enforced authorization policies written in pure Python. For SQLAlchemy 2.0."
 readme = "README.md"
 authors = [{ name = "Colby Joines", email = "colby.j.joines@gmail.com" }]
@@ -32,9 +32,7 @@ keywords = [
     "fastapi",
     "access-control",
 ]
-dependencies = [
-    "sqlalchemy>=2.0",
-]
+dependencies = ["sqlalchemy>=2.0"]
 
 [project.optional-dependencies]
 fastapi = ["fastapi>=0.100"]
