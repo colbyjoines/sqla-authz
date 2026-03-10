@@ -34,11 +34,11 @@ pip install sqla-authz
 You define who can see what as a Python function. sqla-authz compiles it into a database-level filter and applies it to your query:
 
 ```python
-from sqla_authz import policy, authorize_query
+from sqla_authz import READ, authorize_query, policy
 from sqlalchemy import ColumnElement, or_, select, true
 
 
-@policy(Post, "read")
+@policy(Post, READ)
 def post_read(actor: User) -> ColumnElement[bool]:
     if actor.role == "admin":
         return true()  # admins see all rows
@@ -46,45 +46,22 @@ def post_read(actor: User) -> ColumnElement[bool]:
 
 
 stmt = select(Post).order_by(Post.created_at.desc())
-stmt = authorize_query(stmt, actor=current_user, action="read")
+stmt = authorize_query(stmt, actor=current_user, action=READ)
 # SQL: SELECT ... FROM post WHERE (is_published = true OR author_id = :id)
 ```
 
 ---
 
-## How it works
+## Why it fits
 
-```mermaid
-flowchart LR
-    A["@policy(Post, 'read')<br/>Python function"]
-    B[PolicyRegistry]
-    C{Entry Point}
-    D["authorize_query()"]
-    E["do_orm_execute<br/>event hook"]
-    F["AuthzDep<br/>(FastAPI)"]
-    G[Policy Compiler]
-    H["ColumnElement[bool]<br/>SA filter expression"]
-    I["stmt.where(filter)"]
-    J["session.execute()<br/>(sync or async)"]
+sqla-authz is a SQLAlchemy-native authorization kernel for Python apps. It is strongest when you want authorization close to the query layer instead of spread across endpoint checks and post-query filtering.
 
-    A --> B
-    B --> C
-    C -->|Explicit| D
-    C -->|Automatic| E
-    C -->|Framework| F
-    D --> G
-    E --> G
-    F --> G
-    G --> H
-    H --> I
-    I --> J
-```
-
-Your policy function is called with the current actor and returns a SQLAlchemy filter expression. The compiler OR's multiple policies together, applies the result to the query, and passes the statement to `session.execute()`. Scopes provide cross-cutting filters (like tenant isolation) that are automatically AND'd with all policies. The same policies work with both `Session` and `AsyncSession`.
-
-- No policy for a `(model, action)` pair → `WHERE FALSE` (deny by default)
-- No external server or sidecar — runs in-process
-- No custom DSL — policies are Python functions with full IDE support
+- **Explicit first** — start with `authorize_query()` so authorization stays visible and reviewable.
+- **Deny by default** — no policy for a `(model, action)` pair means `WHERE FALSE`, not a silent data leak.
+- **Scopes for boundaries** — tenant or org-wide restrictions are AND'd across matching policies.
+- **Point checks for instances** — use `can()`, `authorize()`, and `authorize_create()` for object-specific decisions.
+- **Optional automation** — move to `authorized_sessionmaker()` or FastAPI `AuthzDep` once the explicit path is stable.
+- **No DSL or sidecar** — policies stay in Python and return normal SQLAlchemy expressions.
 
 ---
 
