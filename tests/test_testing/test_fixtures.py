@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from sqla_authz.policy._registry import PolicyRegistry
+from sqla_authz.session._context import AuthorizationContext
 
 
 class TestAuthzRegistryFixture:
@@ -36,3 +37,12 @@ class TestAuthzRegistryFixture:
         from tests.conftest import Post
 
         assert not authz_registry.has_policy(Post, "read")
+
+
+class TestAuthzContextFixture:
+    """authz_context returns a ready-to-use AuthorizationContext."""
+
+    def test_returns_authorization_context(self, authz_context: AuthorizationContext) -> None:
+        assert isinstance(authz_context, AuthorizationContext)
+        assert authz_context.action == "read"
+        assert authz_context.actor.id == 1

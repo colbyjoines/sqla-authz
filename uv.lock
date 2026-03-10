@@ -1021,50 +1021,69 @@ wheels = [
 
 [[package]]
 name = "sqla-authz"
-version = "0.1.0b2"
+version = "0.1.0b3"
 source = { editable = "." }
 dependencies = [
-    { name = "aiosqlite" },
-    { name = "fastapi" },
-    { name = "httpx" },
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
     { name = "sqlalchemy" },
+]
+
+[package.optional-dependencies]
+asyncio = [
+    { name = "aiosqlite" },
+]
+fastapi = [
+    { name = "fastapi" },
+]
+testing = [
+    { name = "pytest" },
 ]
 
 [package.dev-dependencies]
 dev = [
+    { name = "aiosqlite" },
+    { name = "fastapi" },
+    { name = "httpx" },
     { name = "hypothesis" },
     { name = "pyright" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
     { name = "pytest-benchmark" },
     { name = "pytest-cov" },
     { name = "ruff" },
 ]
 docs = [
+    { name = "fastapi" },
     { name = "mkdocstrings", extra = ["python"] },
+    { name = "pytest" },
     { name = "zensical" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "aiosqlite", specifier = ">=0.19" },
-    { name = "fastapi", specifier = ">=0.100" },
-    { name = "httpx", specifier = ">=0.24" },
-    { name = "pytest", specifier = ">=7.0" },
-    { name = "pytest-asyncio", specifier = ">=0.21" },
+    { name = "aiosqlite", marker = "extra == 'asyncio'", specifier = ">=0.19" },
+    { name = "fastapi", marker = "extra == 'fastapi'", specifier = ">=0.100" },
+    { name = "pytest", marker = "extra == 'testing'", specifier = ">=7.0" },
     { name = "sqlalchemy", specifier = ">=2.0" },
 ]
+provides-extras = ["fastapi", "testing", "asyncio"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "aiosqlite", specifier = ">=0.19" },
+    { name = "fastapi", specifier = ">=0.100" },
+    { name = "httpx", specifier = ">=0.24" },
     { name = "hypothesis", specifier = ">=6.0" },
     { name = "pyright", specifier = ">=1.1" },
+    { name = "pytest", specifier = ">=7.0" },
+    { name = "pytest-asyncio", specifier = ">=0.21" },
     { name = "pytest-benchmark", specifier = ">=4.0" },
     { name = "pytest-cov", specifier = ">=4.0" },
     { name = "ruff", specifier = ">=0.1" },
 ]
 docs = [
+    { name = "fastapi", specifier = ">=0.100" },
     { name = "mkdocstrings", extras = ["python"], specifier = ">=0.24" },
+    { name = "pytest", specifier = ">=7.0" },
     { name = "zensical", specifier = ">=0.0.20" },
 ]
 

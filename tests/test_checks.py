@@ -7,7 +7,7 @@ import sys
 import pytest
 from sqlalchemy import ColumnElement, false, true
 
-from sqla_authz._checks import authorize, can
+from sqla_authz._checks import authorize, authorize_create, can, can_create
 from sqla_authz.exceptions import AuthorizationDenied
 from sqla_authz.policy._registry import PolicyRegistry
 from tests.conftest import MockActor, Post
@@ -269,6 +269,28 @@ class TestAuthorize:
 
         with pytest.raises(AuthorizationDenied):
             authorize(actor, "read", post1, registry=registry)
+
+
+class TestCreateChecks:
+    """Tests for create-specific helper functions."""
+
+    def test_can_create_checks_pending_instance(self) -> None:
+        registry = PolicyRegistry()
+        registry.register(Post, "create", _author_policy, name="author", description="")
+
+        draft = Post(title="New Draft", is_published=False, author_id=1)
+
+        assert can_create(MockActor(id=1), draft, registry=registry) is True
+        assert can_create(MockActor(id=2), draft, registry=registry) is False
+
+    def test_authorize_create_raises_when_denied(self) -> None:
+        registry = PolicyRegistry()
+        registry.register(Post, "create", _author_policy, name="author", description="")
+
+        draft = Post(title="New Draft", is_published=False, author_id=1)
+
+        with pytest.raises(AuthorizationDenied):
+            authorize_create(MockActor(id=2), draft, registry=registry)
 
 
 # ---------------------------------------------------------------------------

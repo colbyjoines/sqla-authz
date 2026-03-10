@@ -18,7 +18,7 @@ Example::
 
 from importlib.metadata import PackageNotFoundError, version
 
-from sqla_authz._checks import authorize, can
+from sqla_authz._checks import authorize, authorize_create, can, can_create
 from sqla_authz._types import ActorLike
 from sqla_authz._verify import verify_scopes
 from sqla_authz.actions import CREATE, DELETE, READ, UPDATE, action
@@ -74,8 +74,10 @@ __all__ = [
     "async_safe_get",
     "async_safe_get_or_raise",
     "authorize",
+    "authorize_create",
     "authorize_query",
     "can",
+    "can_create",
     "configure",
     "explain_access",
     "explain_query",

@@ -56,5 +56,5 @@ and ``explain_access()``. Only ``can()`` and ``authorize()`` are guarded.
 
 ## Project status
 
-sqla-authz is in beta (`v0.1.0b1`). The API is stabilizing but may have
+sqla-authz is in beta (`v0.1.0b3`). The API is stabilizing but may have
 minor changes before `v1.0.0`.

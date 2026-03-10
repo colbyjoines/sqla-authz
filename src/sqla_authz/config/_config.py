@@ -54,6 +54,7 @@ class AuthzConfig:
     on_text_query: OnBypassAction = "ignore"
     on_skip_authz: OnSkipAuthz = "ignore"
     audit_bypasses: bool = False
+    intercept_creates: bool = False
     intercept_updates: bool = False
     intercept_deletes: bool = False
     on_write_denied: OnWriteDenied = "raise"
@@ -126,6 +127,7 @@ class AuthzConfig:
         on_text_query: OnBypassAction | None = None,
         on_skip_authz: OnSkipAuthz | None = None,
         audit_bypasses: bool | None = None,
+        intercept_creates: bool | None = None,
         intercept_updates: bool | None = None,
         intercept_deletes: bool | None = None,
         on_write_denied: OnWriteDenied | None = None,
@@ -143,6 +145,7 @@ class AuthzConfig:
             on_text_query: Override for on_text_query (ignored if None).
             on_skip_authz: Override for on_skip_authz (ignored if None).
             audit_bypasses: Override for audit_bypasses (ignored if None).
+            intercept_creates: Override for intercept_creates (ignored if None).
             intercept_updates: Override for intercept_updates (ignored if None).
             intercept_deletes: Override for intercept_deletes (ignored if None).
             on_write_denied: Override for on_write_denied (ignored if None).
@@ -179,6 +182,9 @@ class AuthzConfig:
             on_text_query=(on_text_query if on_text_query is not None else self.on_text_query),
             on_skip_authz=(on_skip_authz if on_skip_authz is not None else self.on_skip_authz),
             audit_bypasses=(audit_bypasses if audit_bypasses is not None else self.audit_bypasses),
+            intercept_creates=(
+                intercept_creates if intercept_creates is not None else self.intercept_creates
+            ),
             intercept_updates=(
                 intercept_updates if intercept_updates is not None else self.intercept_updates
             ),
@@ -223,6 +229,7 @@ def configure(
     on_text_query: OnBypassAction | None = None,
     on_skip_authz: OnSkipAuthz | None = None,
     audit_bypasses: bool | None = None,
+    intercept_creates: bool | None = None,
     intercept_updates: bool | None = None,
     intercept_deletes: bool | None = None,
     on_write_denied: OnWriteDenied | None = None,
@@ -242,6 +249,7 @@ def configure(
         on_text_query: Set to ``"ignore"``, ``"warn"``, or ``"raise"``.
         on_skip_authz: Set to ``"ignore"``, ``"warn"``, or ``"log"``.
         audit_bypasses: Enable/disable bypass audit logging.
+        intercept_creates: Enable interception of ORM create/insert flushes.
         intercept_updates: Enable interception of UPDATE statements.
         intercept_deletes: Enable interception of DELETE statements.
         on_write_denied: Set to ``"raise"`` or ``"filter"``.
@@ -266,6 +274,7 @@ def configure(
         on_text_query=on_text_query,
         on_skip_authz=on_skip_authz,
         audit_bypasses=audit_bypasses,
+        intercept_creates=intercept_creates,
         intercept_updates=intercept_updates,
         intercept_deletes=intercept_deletes,
         on_write_denied=on_write_denied,

@@ -1,4 +1,4 @@
-"""Tests for write authorization — UPDATE/DELETE interception."""
+"""Tests for write authorization interception."""
 
 from __future__ import annotations
 
@@ -33,6 +33,78 @@ def _setup_session(
         config=config,
     )
     return factory()
+
+
+# ---------------------------------------------------------------------------
+# CREATE interception
+# ---------------------------------------------------------------------------
+
+
+class TestInterceptCreates:
+    """ORM create flushes are intercepted when intercept_creates=True."""
+
+    def test_create_allowed_when_policy_matches(self, engine, session, sample_data) -> None:
+        registry = PolicyRegistry()
+        registry.register(
+            Post,
+            "create",
+            lambda actor: Post.author_id == actor.id,
+            name="own_posts",
+            description="",
+        )
+        config = AuthzConfig(intercept_creates=True)
+        actor = MockActor(id=1)
+
+        sess = _setup_session(engine, registry, config, actor)
+        sess.add(Post(title="Alice Draft", is_published=False, author_id=1))
+        sess.commit()
+
+        plain_sess = sessionmaker(bind=engine)()
+        posts = plain_sess.execute(select(Post).order_by(Post.id)).scalars().all()
+        assert posts[-1].title == "Alice Draft"
+        assert posts[-1].author_id == 1
+
+    def test_create_denied_when_policy_fails(self, engine, session, sample_data) -> None:
+        registry = PolicyRegistry()
+        registry.register(
+            Post,
+            "create",
+            lambda actor: Post.author_id == actor.id,
+            name="own_posts",
+            description="",
+        )
+        config = AuthzConfig(intercept_creates=True)
+        actor = MockActor(id=2)
+
+        sess = _setup_session(engine, registry, config, actor)
+        sess.add(Post(title="Alice Draft", is_published=False, author_id=1))
+
+        with pytest.raises(WriteDeniedError, match="not authorized to create"):
+            sess.commit()
+
+    def test_create_no_policy_raises(self, engine, session, sample_data) -> None:
+        registry = PolicyRegistry()
+        config = AuthzConfig(intercept_creates=True)
+        actor = MockActor(id=1)
+
+        sess = _setup_session(engine, registry, config, actor)
+        sess.add(Post(title="Alice Draft", is_published=False, author_id=1))
+
+        with pytest.raises(WriteDeniedError, match="not authorized to create"):
+            sess.commit()
+
+    def test_create_not_intercepted_when_disabled(self, engine, session, sample_data) -> None:
+        registry = PolicyRegistry()
+        config = AuthzConfig(intercept_creates=False)
+        actor = MockActor(id=2)
+
+        sess = _setup_session(engine, registry, config, actor)
+        sess.add(Post(title="Open Draft", is_published=False, author_id=1))
+        sess.commit()
+
+        plain_sess = sessionmaker(bind=engine)()
+        posts = plain_sess.execute(select(Post).order_by(Post.id)).scalars().all()
+        assert posts[-1].title == "Open Draft"
 
 
 # ---------------------------------------------------------------------------
@@ -238,6 +310,7 @@ class TestWriteAuthzConfig:
 
     def test_defaults(self) -> None:
         config = AuthzConfig()
+        assert config.intercept_creates is False
         assert config.intercept_updates is False
         assert config.intercept_deletes is False
         assert config.on_write_denied == "raise"
@@ -251,10 +324,12 @@ class TestWriteAuthzConfig:
     def test_merge_overrides_write_config(self) -> None:
         config = AuthzConfig()
         merged = config.merge(
+            intercept_creates=True,
             intercept_updates=True,
             intercept_deletes=True,
             on_write_denied="filter",
         )
+        assert merged.intercept_creates is True
         assert merged.intercept_updates is True
         assert merged.intercept_deletes is True
         assert merged.on_write_denied == "filter"

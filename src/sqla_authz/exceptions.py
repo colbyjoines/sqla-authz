@@ -232,12 +232,12 @@ class UnscopedModelError(AuthzError):
 class WriteDeniedError(AuthzError):
     """Write operation denied by authorization policy.
 
-    Raised when ``on_write_denied="raise"`` and an UPDATE or DELETE
-    statement targets rows that the actor is not authorized to modify.
+    Raised when a write operation targets data that the actor is not
+    authorized to create, update, or delete.
 
     Attributes:
         actor: The actor that was denied.
-        action: The action that was attempted (``"update"`` or ``"delete"``).
+        action: The action that was attempted.
         resource_type: The type of resource involved.
     """
 

@@ -8,15 +8,21 @@ Requires Python 3.10+ and SQLAlchemy 2.0+. No external servers or sidecars.
 
     ```bash
     pip install sqla-authz
+    pip install "sqla-authz[fastapi]"
+    pip install "sqla-authz[testing]"
+    pip install "sqla-authz[asyncio]"
     ```
 
 === "uv"
 
     ```bash
     uv add sqla-authz
+    uv add 'sqla-authz[fastapi]'
+    uv add 'sqla-authz[testing]'
+    uv add 'sqla-authz[asyncio]'
     ```
 
-Everything is included by default — FastAPI integration, testing utilities, and async support.
+Base installation only requires SQLAlchemy. Install extras for optional integrations and tooling.
 
 ---
 
@@ -235,8 +241,31 @@ authorize(actor, "edit", post)
 
 Point checks reuse your `@policy` functions. They evaluate the policy expression against the object's attributes in memory — no database round-trip.
 
+Use point checks for instance-specific decisions and pending writes. Use `authorize_query()` for collections and list endpoints.
+
 !!! warning "Operator Limitations"
     Point checks support common operators (`==`, `!=`, `<`, `>`, `in_`, `has()`, `any()`, etc.) but not SQL functions like `func.lower()` or database-specific operators. Mark such policies with `query_only=True` to get a clear error. See [Limitations](limitations.md) for the full operator list.
+
+---
+
+## Create Authorization
+
+Use `authorize_create()` for pending ORM instances:
+
+```python
+from sqla_authz import authorize_create
+
+draft = Post(
+    title="Roadmap",
+    author_id=current_user.id,
+    is_published=False,
+)
+
+authorize_create(current_user, draft)
+```
+
+!!! info "Create Policies Are Point Checks"
+    Create checks run against the pending object's in-memory attributes. Keep create policies compatible with `can()` / `authorize()`, not `query_only=True`.
 
 ---
 
@@ -245,18 +274,31 @@ Point checks reuse your `@policy` functions. They evaluate the policy expression
 If calling `authorize_query()` on every statement is too repetitive, authorize all SELECTs automatically:
 
 ```python
-from sqla_authz import authorized_sessionmaker
+from sqla_authz.session import authorized_sessionmaker
+from sqla_authz import AuthzConfig
 
 SessionLocal = authorized_sessionmaker(
     bind=engine,
     actor_provider=get_current_user,
     action="read",
+    config=AuthzConfig(
+        intercept_creates=True,
+        intercept_updates=True,
+        intercept_deletes=True,
+    ),
 )
 
 with SessionLocal() as session:
     # Every SELECT is authorized — no explicit authorize_query() needed
     posts = session.execute(select(Post)).scalars().all()
 ```
+
+Write boundaries:
+
+- `intercept_creates=True` checks ORM objects added via `session.add()` during flush/commit.
+- `intercept_updates=True` filters ORM/Core `UPDATE` statements.
+- `intercept_deletes=True` filters ORM/Core `DELETE` statements.
+- Core `INSERT` statements executed with `session.execute(insert(...))` are **not** intercepted.
 
 Skip authorization for specific queries:
 
@@ -291,12 +333,18 @@ configure(
 |-------|---------|-------------|
 | `on_missing_policy` | `"deny"` | No policy registered: `"deny"` appends `WHERE FALSE`; `"raise"` throws `NoPolicyError` |
 | `default_action` | `"read"` | Action used by session interception when none is specified |
+| `intercept_creates` | `False` | Check pending ORM objects during flush/commit using the `create` action |
+| `intercept_updates` | `False` | Apply policy filters to intercepted `UPDATE` statements |
+| `intercept_deletes` | `False` | Apply policy filters to intercepted `DELETE` statements |
+| `on_write_denied` | `"raise"` | For intercepted writes: `"raise"` errors, `"filter"` adds `WHERE FALSE` for update/delete |
 | `on_unknown_action` | `"ignore"` | Action not found in registry: `"ignore"` silent; `"warn"` logs with suggestions; `"raise"` throws `UnknownActionError` |
 | `log_policy_decisions` | `False` | Emit audit log entries on the `"sqla_authz"` logger |
 
 ---
 
 ## FastAPI
+
+Install the integration with `pip install "sqla-authz[fastapi]"`.
 
 ### Direct Pattern
 
@@ -340,6 +388,8 @@ async def get_post(post: Post = AuthzDep(Post, "read", id_param="post_id")) -> d
 ---
 
 ## Testing
+
+Install the helpers with `pip install "sqla-authz[testing]"`.
 
 ### Mock Actors
 

@@ -10,10 +10,12 @@ from sqlalchemy.orm import ORMExecuteState, Session, sessionmaker, with_loader_c
 from sqlalchemy.sql.elements import TextClause
 
 from sqla_authz._action_validation import check_unknown_action
+from sqla_authz._checks import authorize_create
 from sqla_authz._types import ActorLike
+from sqla_authz.actions import CREATE
 from sqla_authz.compiler._expression import evaluate_policies
 from sqla_authz.config._config import AuthzConfig, get_global_config
-from sqla_authz.exceptions import NoPolicyError, WriteDeniedError
+from sqla_authz.exceptions import AuthorizationDenied, NoPolicyError, WriteDeniedError
 from sqla_authz.policy._registry import PolicyRegistry, get_default_registry
 from sqla_authz.session._bypass_handlers import (
     handle_column_load_bypass,
@@ -110,6 +112,37 @@ def _build_authz_handler(
     return _apply_authz
 
 
+def _build_create_authz_handler(
+    *,
+    actor_provider: Callable[[], ActorLike],
+    target_registry: PolicyRegistry,
+    target_config: AuthzConfig,
+) -> Callable[[Session, Any, Any], None]:
+    """Build the ``before_flush`` handler for ORM create authorization."""
+
+    def _apply_create_authz(session: Session, flush_context: Any, instances: Any) -> None:
+        del flush_context, instances
+
+        if not target_config.intercept_creates:
+            return
+
+        actor = actor_provider()
+        check_unknown_action(target_registry, CREATE, config=target_config)
+
+        for resource in list(session.new):
+            try:
+                authorize_create(actor, resource, registry=target_registry, session=session)
+            except AuthorizationDenied as exc:
+                raise WriteDeniedError(
+                    actor=actor,
+                    action=CREATE,
+                    resource_type=type(resource).__name__,
+                    message=str(exc),
+                ) from exc
+
+    return _apply_create_authz
+
+
 def _should_intercept_write(
     orm_execute_state: ORMExecuteState,
     config: AuthzConfig,
@@ -189,8 +222,8 @@ def install_interceptor(
 ) -> None:
     """Install a ``do_orm_execute`` event listener on a session factory.
 
-    The listener intercepts SELECT queries and applies authorization
-    filters based on registered policies.
+    The listener intercepts SELECT queries and, when enabled via config,
+    CREATE/UPDATE/DELETE writes as well.
 
     Args:
         session_factory: A SQLAlchemy ``sessionmaker`` instance.
@@ -223,7 +256,13 @@ def install_interceptor(
         target_registry=target_registry,
         target_config=target_config,
     )
+    create_handler = _build_create_authz_handler(
+        actor_provider=actor_provider,
+        target_registry=target_registry,
+        target_config=target_config,
+    )
     event.listen(session_factory, "do_orm_execute", handler)
+    event.listen(session_factory, "before_flush", create_handler)
 
 
 def authorized_sessionmaker(
@@ -238,7 +277,7 @@ def authorized_sessionmaker(
     """Create a sessionmaker with automatic authorization interception.
 
     Convenience factory that creates a ``sessionmaker`` and installs
-    the authorization interceptor in one step.
+    authorization interceptors in one step.
 
     Args:
         bind: The engine or connection to bind to.

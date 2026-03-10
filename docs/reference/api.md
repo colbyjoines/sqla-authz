@@ -16,7 +16,15 @@
     options:
       show_root_heading: true
 
+::: sqla_authz.can_create
+    options:
+      show_root_heading: true
+
 ::: sqla_authz.authorize
+    options:
+      show_root_heading: true
+
+::: sqla_authz.authorize_create
     options:
       show_root_heading: true
 

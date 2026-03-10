@@ -24,6 +24,10 @@ class TestAuthzConfigDefaults:
         config = AuthzConfig()
         assert config.default_action == "read"
 
+    def test_default_create_interception_is_disabled(self) -> None:
+        config = AuthzConfig()
+        assert config.intercept_creates is False
+
 
 class TestAuthzConfigFrozen:
     """Test that AuthzConfig is immutable."""
@@ -76,6 +80,11 @@ class TestAuthzConfigMerge:
         merged = config.merge(on_missing_policy="raise", default_action="delete")
         assert merged.on_missing_policy == "raise"
         assert merged.default_action == "delete"
+
+    def test_merge_overrides_create_interception(self) -> None:
+        config = AuthzConfig()
+        merged = config.merge(intercept_creates=True)
+        assert merged.intercept_creates is True
 
 
 class TestGlobalConfig:

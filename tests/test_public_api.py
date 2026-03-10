@@ -24,7 +24,9 @@ class TestTopLevelExports:
         "scope",
         "authorize_query",
         "can",
+        "can_create",
         "authorize",
+        "authorize_create",
         "configure",
         "verify_scopes",
         "ActorLike",
@@ -61,8 +63,10 @@ class TestTopLevelExports:
             PolicyCompilationError,
             PolicyRegistry,
             authorize,
+            authorize_create,
             authorize_query,
             can,
+            can_create,
             configure,
             policy,
         )
@@ -71,7 +75,9 @@ class TestTopLevelExports:
             policy,
             authorize_query,
             can,
+            can_create,
             authorize,
+            authorize_create,
             configure,
             ActorLike,
             PolicyRegistry,
@@ -86,13 +92,23 @@ class TestTopLevelExports:
     def test_callable_symbols_are_callable(self) -> None:
         from sqla_authz import (
             authorize,
+            authorize_create,
             authorize_query,
             can,
+            can_create,
             configure,
             policy,
         )
 
-        for sym in [policy, authorize_query, can, authorize, configure]:
+        for sym in [
+            policy,
+            authorize_query,
+            can,
+            can_create,
+            authorize,
+            authorize_create,
+            configure,
+        ]:
             assert callable(sym), f"{sym!r} should be callable"
 
     def test_class_symbols_are_classes(self) -> None:

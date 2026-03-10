@@ -22,10 +22,13 @@ Most authorization libraries answer a yes/no question: *can this user do this ac
 sqla-authz turns your policies into database-level filters, so the database does the enforcement. No post-query Python loops, no N+1 permission checks.
 
 * **Database-enforced** — policies compile to filter expressions; the database does the filtering
+* **SQLAlchemy-native kernel** — strongest for ORM-heavy Python apps that want authorization close to the query layer
 * **Pure Python** — no DSL, no config files; full IDE autocomplete, type checking, and debugging
 * **Fail-closed** — missing policy = zero rows, not a data leak
 * **Async-equal** — same synchronous policy code works with both `Session` and `AsyncSession`
 * **Type-safe** — passes Pyright strict mode with zero errors
+
+sqla-authz is a focused authorization kernel, not a general cross-service policy platform. Its sweet spot is query filtering, scopes, point checks, and ORM write guardrails inside SQLAlchemy applications.
 
 ## Usage
 
@@ -88,6 +91,21 @@ if can(current_user, "read", some_post):
 authorize(current_user, "read", some_post)
 ```
 
+### Create Authorization
+
+Check a pending ORM object before it is flushed:
+
+```python
+from sqla_authz import authorize_create
+
+draft = Post(title="Roadmap", author_id=current_user.id, is_published=False)
+authorize_create(current_user, draft)
+session.add(draft)
+session.commit()
+```
+
+You can also enable automatic create interception for ORM `session.add()` / flush flows with `AuthzConfig(intercept_creates=True)`.
+
 ### Automatic Session Interception
 
 Opt-in to authorize every SELECT automatically:
@@ -128,6 +146,14 @@ _For more examples and advanced patterns, see the [Documentation](https://colbyj
 
 ```sh
 pip install sqla-authz
+```
+
+Optional extras:
+
+```sh
+pip install "sqla-authz[fastapi]"
+pip install "sqla-authz[testing]"
+pip install "sqla-authz[asyncio]"
 ```
 
 For development:

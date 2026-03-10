@@ -9,6 +9,8 @@ import pytest
 
 from sqla_authz.config._config import AuthzConfig
 from sqla_authz.policy._registry import PolicyRegistry
+from sqla_authz.session._context import AuthorizationContext
+from sqla_authz.testing._actors import MockActor
 
 __all__ = ["authz_registry", "authz_config", "authz_context", "isolated_authz_state"]
 
@@ -50,13 +52,13 @@ def authz_config() -> dict[str, Any]:
 
 
 @pytest.fixture()
-def authz_context() -> None:
-    """Provide an ``AuthorizationContext`` fixture.
-
-    Returns ``None`` until the session module is available.
-    Will be updated when session interception is implemented.
-    """
-    return None
+def authz_context() -> AuthorizationContext:
+    """Provide a default ``AuthorizationContext`` for tests."""
+    return AuthorizationContext(
+        actor=MockActor(id=1),
+        action="read",
+        config=AuthzConfig(),
+    )
 
 
 @pytest.fixture()
