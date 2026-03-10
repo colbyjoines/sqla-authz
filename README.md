@@ -23,10 +23,9 @@ sqla-authz turns your policies into database-level filters, so the database does
 
 * **Database-enforced** — policies compile to filter expressions; the database does the filtering
 * **SQLAlchemy-native kernel** — strongest for ORM-heavy Python apps that want authorization close to the query layer
-* **Pure Python** — no DSL, no config files; full IDE autocomplete, type checking, and debugging
+* **Pure Python** — no DSL, no config files; full IDE autocomplete, strict type safety, and debugging
 * **Fail-closed** — missing policy = zero rows, not a data leak
 * **Async-equal** — same synchronous policy code works with both `Session` and `AsyncSession`
-* **Type-safe** — passes Pyright strict mode with zero errors
 
 sqla-authz is a focused authorization kernel, not a general cross-service policy platform. Its sweet spot is query filtering, scopes, point checks, and ORM write guardrails inside SQLAlchemy applications.
 
