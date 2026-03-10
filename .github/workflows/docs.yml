@@ -4,9 +4,12 @@ on:
   push:
     branches: [main]
     paths:
+      - ".github/workflows/docs.yml"
       - "docs/**"
       - "mkdocs.yml"
+      - "pyproject.toml"
       - "src/sqla_authz/**"
+      - "uv.lock"
   workflow_dispatch:
 
 permissions:
@@ -26,7 +29,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.12"
-      - run: uv sync --extra docs
+      - run: uv sync --group docs
       - name: Build docs
         run: uv run zensical build
       - uses: actions/upload-pages-artifact@v3
